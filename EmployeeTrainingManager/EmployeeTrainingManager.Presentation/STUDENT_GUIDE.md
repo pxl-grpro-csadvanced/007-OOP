@@ -1,0 +1,382 @@
+# Student Guide - WPF Presentation Layer
+
+## Understanding the Code Structure
+
+This WPF application uses a **simple code-behind approach** that's easy to understand. There are only 2 main files you need to focus on:
+
+### 1. MainWindow.xaml (The UI)
+This file defines what users see on the screen using XAML markup.
+
+**Key Concepts:**
+- **Named Controls**: Controls have `Name=""` attribute so you can access them in C# code
+  ```xml
+  <TextBox Name="FirstNameTextBox" />
+  ```
+- **Event Handlers**: Buttons have `Click=""` attribute to specify which method runs when clicked
+  ```xml
+  <Button Content="Add Employee" Click="AddEmployeeButton_Click" />
+  ```
+- **ItemsSource**: Controls like DataGrid and ListBox display lists of data
+  ```xml
+  <DataGrid Name="EmployeeDataGrid" />
+  ```
+
+### 2. MainWindow.xaml.cs (The Logic)
+This file contains all the C# code that makes the application work.
+
+**Key Concepts:**
+- **Services**: Created in constructor to access business logic
+- **Event Handlers**: Methods that run when users interact with the UI
+- **Async/Await**: Used for database operations to keep the UI responsive
+- **Direct Property Assignment**: Setting `ItemsSource` directly on controls
+
+## How the Application Works
+
+### Step 1: Application Startup (App.xaml)
+- The `StartupUri="MainWindow.xaml"` in App.xaml tells WPF to open MainWindow when the app starts
+
+### Step 2: Window Initialization (MainWindow.xaml.cs Constructor)
+
+```csharp
+public MainWindow()
+{
+    InitializeComponent();  // Must be called first - loads the XAML
+    
+    // 1. Set up database connection
+    var connectionString = "Server=(localdb)\\mssqllocaldb;Database=EmployeeTrainingDb;Trusted_Connection=True;";
+    var dbFactory = new DbConnectionFactory(connectionString);
+    
+    // 2. Create repositories (data access layer)
+    var employeeRepository = new EmployeeRepository(dbFactory);
+    var trainingRepository = new TrainingRepository(dbFactory);
+    var enrollmentRepository = new EnrollmentRepository(dbFactory, employeeRepository, trainingRepository);
+    
+    // 3. Create services (business logic layer)
+    _employeeService = new EmployeeService(employeeRepository);
+    _trainingService = new TrainingService(trainingRepository);
+    _enrollmentService = new EnrollmentService(enrollmentRepository, employeeRepository, trainingRepository);
+    
+    // 4. Load initial data from database
+    LoadAllData();
+}
+```
+
+### Step 3: User Interactions
+When a user clicks a button, the corresponding event handler method runs:
+
+#### Adding an Employee
+```csharp
+private async void AddEmployeeButton_Click(object sender, RoutedEventArgs e)
+{
+    // 1. Get text from TextBoxes (these are named controls in XAML)
+    var firstName = FirstNameTextBox.Text;
+    var lastName = LastNameTextBox.Text;
+    
+    // 2. Validate input
+    if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+    {
+        MessageBox.Show("Please enter first and last name");
+        return;
+    }
+    
+    // 3. Call service to add to database
+    await _employeeService.AddEmployeeAsync(firstName, lastName);
+    
+    // 4. Clear the form
+    FirstNameTextBox.Clear();
+    LastNameTextBox.Clear();
+    
+    // 5. Reload data to show new employee
+    await LoadEmployees();
+    
+    // 6. Show success message
+    MessageBox.Show("Employee added successfully!");
+}
+```
+
+#### Loading Data into Controls
+```csharp
+private async Task LoadEmployees()
+{
+    try
+    {
+        // 1. Get data from service
+        var employees = await _employeeService.GetAllEmployeesAsync();
+        
+        // 2. Set the ItemsSource property directly
+        EmployeeDataGrid.ItemsSource = employees;
+        EmployeeComboBox.ItemsSource = employees;
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show($"Error loading employees: {ex.Message}");
+    }
+}
+```
+
+## Important WPF Concepts
+
+### 1. Setting ItemsSource Directly
+Instead of using collections, we set the ItemsSource property directly:
+```csharp
+// Get data from database
+var employees = await _employeeService.GetAllEmployeesAsync();
+
+// Display it in the DataGrid
+EmployeeDataGrid.ItemsSource = employees;
+```
+- Simple and direct!
+- WPF automatically displays all items
+
+### 2. Named Controls
+Access controls from code using their names:
+```csharp
+var text = FirstNameTextBox.Text;  // Get text from TextBox
+FirstNameTextBox.Clear();           // Clear the TextBox
+EmployeeDataGrid.ItemsSource = employees;  // Set data to display
+```
+
+### 3. Event Handlers
+Two parts: XAML and C#
+
+**XAML:**
+```xml
+<Button Click="AddEmployeeButton_Click" />
+```
+
+**C#:**
+```csharp
+private async void AddEmployeeButton_Click(object sender, RoutedEventArgs e)
+{
+    // Code runs when button is clicked
+}
+```
+
+### 4. Async/Await
+```csharp
+private async void ButtonClick(object sender, RoutedEventArgs e)
+{
+    await _service.DoSomethingAsync();  // Wait for database operation
+    // Code here runs after operation completes
+}
+```
+- `async` keyword: Method can use `await`
+- `await` keyword: Wait for operation to complete
+- Keeps UI responsive during database operations
+
+## Common Tasks
+
+### Get Selected Item from DataGrid
+```csharp
+var selected = EmployeeDataGrid.SelectedItem as Employee;
+```
+
+### Get Selected Item from ComboBox
+```csharp
+var selected = EmployeeComboBox.SelectedItem as Employee;
+```
+
+### Get Text from TextBox
+```csharp
+var text = FirstNameTextBox.Text;
+```
+
+### Get ComboBox Selected Value
+```csharp
+var selectedType = (TrainingTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+```
+
+### Show/Hide Controls
+```csharp
+TechnicalFieldsPanel.Visibility = Visibility.Visible;   // Show
+SafetyFieldsPanel.Visibility = Visibility.Collapsed;    // Hide
+```
+
+### Show Message Box
+```csharp
+MessageBox.Show("Message", "Title", MessageBoxButton.OK, MessageBoxImage.Information);
+```
+
+### Confirmation Dialog
+```csharp
+var result = MessageBox.Show("Are you sure?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
+if (result == MessageBoxResult.Yes)
+{
+    // User clicked Yes
+}
+```
+
+## How Services Are Created
+
+### Layered Architecture
+The application follows a layered architecture:
+
+1. **Presentation Layer** (MainWindow) - The UI
+2. **Application Layer** (Services) - Business logic
+3. **Infrastructure Layer** (Repositories) - Database access
+4. **Domain Layer** (Entities) - Data models
+
+### Creating the Layers in Constructor
+
+```csharp
+// Step 1: Database connection
+var dbFactory = new DbConnectionFactory(connectionString);
+
+// Step 2: Repositories (need database connection)
+var employeeRepository = new EmployeeRepository(dbFactory);
+var trainingRepository = new TrainingRepository(dbFactory);
+var enrollmentRepository = new EnrollmentRepository(dbFactory, employeeRepository, trainingRepository);
+
+// Step 3: Services (need repositories)
+_employeeService = new EmployeeService(employeeRepository);
+_trainingService = new TrainingService(trainingRepository);
+_enrollmentService = new EnrollmentService(enrollmentRepository, employeeRepository, trainingRepository);
+```
+
+**Why this order?**
+- Repositories need the database connection factory
+- Services need repositories to access data
+- EnrollmentRepository needs the other repositories to load related data
+
+## Understanding the Constructor Order
+
+**Important**: Things must be done in this specific order:
+
+```csharp
+public MainWindow()
+{
+    InitializeComponent();           // 1. MUST BE FIRST - loads XAML
+    
+    // 2. Create database and repositories
+    var dbFactory = new DbConnectionFactory(connectionString);
+    var employeeRepository = new EmployeeRepository(dbFactory);
+    // ... create other repositories
+    
+    // 3. Create services
+    _employeeService = new EmployeeService(employeeRepository);
+    // ... create other services
+    
+    // 4. Create collections
+    Employees = new ObservableCollection<Employee>();
+    // ... create other collections
+    
+    // 5. Set DataContext (enables data binding)
+    DataContext = this;
+    
+    // 6. Load initial data
+    LoadAllData();
+}
+```
+
+## Flow of Data
+
+1. **User Input** ? TextBox/ComboBox/CheckBox
+2. **Button Click** ? Event Handler Method
+3. **Validation** ? Check if input is valid
+4. **Service Call** ? Business logic & database operation (using `await`)
+5. **Reload Data** ? Get fresh data from database
+6. **Set ItemsSource** ? Display data in controls (`EmployeeDataGrid.ItemsSource = employees`)
+7. **User Feedback** ? MessageBox shows success/error
+
+## Example: Complete Flow for Adding an Employee
+
+**Step-by-step breakdown:**
+
+1. User types "John" in FirstNameTextBox
+2. User types "Doe" in LastNameTextBox
+3. User clicks "Add Employee" button
+4. `AddEmployeeButton_Click` method runs
+5. Method gets text from both TextBoxes
+6. Method validates the input
+7. Method calls `_employeeService.AddEmployeeAsync()` to save to database
+8. Method clears the TextBoxes
+9. Method calls `LoadEmployees()` to refresh the list
+10. `LoadEmployees()` gets all employees from database
+11. `LoadEmployees()` sets `EmployeeDataGrid.ItemsSource = employees`
+12. DataGrid automatically displays the updated list
+13. MessageBox shows "Employee added successfully!"
+
+## Common Tasks
+
+### Display Data in a DataGrid
+```csharp
+var employees = await _employeeService.GetAllEmployeesAsync();
+EmployeeDataGrid.ItemsSource = employees;
+```
+
+### Display Data in a ComboBox
+```csharp
+var trainings = await _trainingService.GetAllTrainingsAsync();
+TrainingComboBox.ItemsSource = trainings;
+```
+
+### Get Selected Item from DataGrid
+```csharp
+var selected = EmployeeDataGrid.SelectedItem as Employee;
+```
+
+### Get Selected Item from ComboBox
+```csharp
+var selected = EmployeeComboBox.SelectedItem as Employee;
+```
+
+### Get Text from TextBox
+```csharp
+var text = FirstNameTextBox.Text;
+```
+
+### Get ComboBox Selected Value
+```csharp
+var selectedType = (TrainingTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
+```
+
+### Show/Hide Controls
+```csharp
+TechnicalFieldsPanel.Visibility = Visibility.Visible;   // Show
+SafetyFieldsPanel.Visibility = Visibility.Collapsed;    // Hide
+```
+
+### Show Message Box
+```csharp
+MessageBox.Show("Message", "Title", MessageBoxButton.OK, MessageBoxImage.Information);
+```
+
+### Confirmation Dialog
+```csharp
+var result = MessageBox.Show("Are you sure?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
+if (result == MessageBoxResult.Yes)
+{
+    // User clicked Yes
+}
+```
+
+## Tips for Students
+
+1. **Always call `InitializeComponent()`** first in the constructor - it loads the XAML
+2. **Use `await`** when calling service methods that return `Task`
+3. **Validate user input** before calling services
+4. **Handle exceptions** with try-catch blocks
+5. **Give user feedback** with MessageBox after operations
+6. **Reload data** after add/update/delete operations (call Load methods again)
+7. **Use meaningful names** for controls (e.g., `FirstNameTextBox`, not `TextBox1`)
+8. **Check for null** before using selected items from DataGrid/ComboBox
+9. **Set ItemsSource** to display data in DataGrids, ListBoxes, and ComboBoxes
+
+## Debugging Tips
+
+- Set breakpoints in event handler methods
+- Check if services are null (creation issue)
+- Verify control names match between XAML and C#
+- Check database connection string in MainWindow constructor
+- Look for exceptions in MessageBox error messages
+- Use the debugger to step through code line by line
+
+## Key Takeaways
+
+1. **WPF = XAML + C#**: UI in XAML, logic in C# code-behind
+2. **Event Handlers**: Connect user actions to code
+3. **ItemsSource Property**: Set this to display data in lists and grids
+4. **Named Controls**: Access UI elements by name from code
+5. **Layered Architecture**: Presentation ? Application ? Infrastructure ? Domain
+6. **Constructor Pattern**: Create dependencies in order (factory ? repos ? services)
+7. **No Magic**: Everything is explicit and easy to follow!

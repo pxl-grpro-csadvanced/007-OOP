@@ -1,0 +1,94 @@
+﻿# Employee Training Manager - Presentation Layer
+
+## Overview
+This is the WPF presentation layer for the Employee Training Manager application. It provides a user-friendly interface to manage employees, trainings, and enrollments.
+
+## Features
+
+### 1. Employee Management
+- View all employees in a data grid
+- Add new employees with first name and last name
+- Delete existing employees
+- Select an employee to view their enrollments
+
+### 2. Training Management
+- View all trainings (Technical and Safety)
+- Add new Technical Training (requires: ID, Title, Trainer Name, Technology)
+- Add new Safety Training (requires: ID, Title, Trainer Name, Duration, Risk Level)
+- Delete existing trainings
+- Dynamic form that changes based on training type selection
+
+### 3. Enrollment Management
+- Enroll employees in trainings
+- Mark enrollments as billable
+- View all enrollments for selected employee
+- Delete enrollments
+
+## Architecture
+
+### Code-Behind Pattern
+The presentation layer uses a simple code-behind approach that's easy to understand:
+
+- **MainWindow.xaml**: The UI definition with named controls
+- **MainWindow.xaml.cs**: Event handlers and business logic
+- **App.xaml.cs**: Application startup and dependency injection setup
+
+This approach avoids complex patterns like MVVM, making it easier for students to understand the flow of data and events.
+
+### Dependency Injection
+The application uses Microsoft.Extensions.DependencyInjection:
+- Configured in `App.xaml.cs`
+- Registers repositories and services
+- Injects services into MainWindow constructor
+- Uses LocalDB for data storage
+
+## Database Connection
+Default connection string in `App.xaml.cs`:
+```
+Server=(localdb)\\mssqllocaldb;Database=EmployeeTrainingDb;Trusted_Connection=True;
+```
+
+## Usage
+
+1. **Run the application**: The main window will open with three tabs
+2. **Add Employees**: Go to Employees tab, enter details, and click "Add Employee"
+3. **Add Trainings**: Go to Trainings tab, select type, enter details, and click "Add Training"
+4. **Enroll Employees**: Go to Enrollments tab, select employee and training, check "Billable" if needed, and click "Enroll"
+5. **View Enrollments**: Select an employee in the Employees tab to see their enrollments automatically
+6. **Refresh Data**: Click "Refresh All" button to reload all data from the database
+
+## Key Components
+
+### Event Handlers
+All user actions are handled through simple button click events:
+- `AddEmployeeButton_Click`: Adds a new employee
+- `DeleteEmployeeButton_Click`: Deletes selected employee
+- `AddTrainingButton_Click`: Adds a new training
+- `DeleteTrainingButton_Click`: Deletes selected training
+- `EnrollButton_Click`: Enrolls employee in training
+- `DeleteEnrollmentButton_Click`: Deletes selected enrollment
+- `RefreshButton_Click`: Refreshes all data
+- `EmployeeDataGrid_SelectionChanged`: Loads enrollments when employee is selected
+- `TrainingTypeComboBox_SelectionChanged`: Shows/hides relevant form fields
+
+### Data Binding
+- ObservableCollection for automatic UI updates
+- Named controls for direct access in code-behind
+- Simple binding syntax without converters or complex patterns
+
+## UI Features
+- Color-coded buttons for different actions (Add: Blue, Delete: Red, Enroll: Orange, Refresh: Green)
+- Confirmation dialogs for delete operations
+- Success and error messages
+- Dynamic form fields based on training type selection
+- Responsive layout with proper spacing and grouping
+
+## Learning Points for Students
+1. **WPF Basics**: Understanding XAML and code-behind
+2. **Event-Driven Programming**: Button clicks trigger event handlers
+3. **Async/Await**: Asynchronous database operations
+4. **Dependency Injection**: Services injected through constructor
+5. **ObservableCollection**: Automatic UI updates when data changes
+6. **Data Binding**: Simple binding between UI and collections
+7. **Error Handling**: Try-catch blocks with user-friendly messages
+

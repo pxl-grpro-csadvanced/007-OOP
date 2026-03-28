@@ -1,0 +1,195 @@
+﻿# Student Guide - WPF Presentation Layer
+
+## Understanding the Code Structure
+
+This WPF application uses a **simple code-behind approach** that's easy to understand. There are only 2 main files you need to focus on:
+
+### 1. MainWindow.xaml (The UI)
+This file defines what users see on the screen using XAML markup.
+
+**Key Concepts:**
+- **Named Controls**: Controls have `Name=""` attribute so you can access them in C# code
+  ```xml
+  <TextBox Name="FirstNameTextBox" />
+  ```
+- **Event Handlers**: Buttons have `Click=""` attribute to specify which method runs when clicked
+  ```xml
+  <Button Content="Add Employee" Click="AddEmployeeButton_Click" />
+  ```
+- **Data Binding**: Controls can display data from collections using `ItemsSource="{Binding}"`
+  ```xml
+  <DataGrid ItemsSource="{Binding Employees}" />
+  ```
+
+### 2. MainWindow.xaml.cs (The Logic)
+This file contains all the C# code that makes the application work.
+
+**Key Concepts:**
+- **Services**: Injected through constructor to access business logic
+- **ObservableCollections**: Special lists that automatically update the UI when data changes
+- **Event Handlers**: Methods that run when users interact with the UI
+- **Async/Await**: Used for database operations to keep the UI responsive
+
+## How the Application Works
+
+### Step 1: Application Startup (App.xaml.cs)
+1. `OnStartup` method runs when app starts
+2. Services are registered (Dependency Injection)
+3. MainWindow is created with services injected
+4. Window is displayed
+
+### Step 2: Window Initialization (MainWindow.xaml.cs Constructor)
+1. Services are stored in private fields
+2. ObservableCollections are created for Employees, Trainings, and Enrollments
+3. `DataContext = this` allows XAML to bind to the collections
+4. `LoadAllData()` loads initial data from database
+
+### Step 3: User Interactions
+When a user clicks a button, the corresponding event handler method runs:
+
+#### Adding an Employee
+```csharp
+private async void AddEmployeeButton_Click(object sender, RoutedEventArgs e)
+{
+    // 1. Get text from TextBoxes
+    var firstName = FirstNameTextBox.Text;
+    var lastName = LastNameTextBox.Text;
+    
+    // 2. Validate input
+    if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName))
+    {
+        MessageBox.Show("Please enter first and last name");
+        return;
+    }
+    
+    // 3. Call service to add to database
+    await _employeeService.AddEmployeeAsync(firstName, lastName);
+    
+    // 4. Clear the form
+    FirstNameTextBox.Clear();
+    LastNameTextBox.Clear();
+    
+    // 5. Reload data to show new employee
+    await LoadEmployees();
+    
+    // 6. Show success message
+    MessageBox.Show("Employee added successfully!");
+}
+```
+
+## Important WPF Concepts
+
+### 1. ObservableCollection
+```csharp
+public ObservableCollection<Employee> Employees { get; set; }
+```
+- Automatically updates the UI when items are added or removed
+- Just add items: `Employees.Add(newEmployee)`
+- UI updates automatically!
+
+### 2. Data Binding
+In XAML:
+```xml
+<DataGrid ItemsSource="{Binding Employees}" />
+```
+In C# Constructor:
+```csharp
+DataContext = this;
+```
+- The `{Binding Employees}` looks for a property named `Employees` in the DataContext
+- Since `DataContext = this`, it finds the `Employees` property in MainWindow
+
+### 3. Named Controls
+Access controls from code using their names:
+```csharp
+var text = FirstNameTextBox.Text;  // Get text from TextBox
+FirstNameTextBox.Clear();           // Clear the TextBox
+```
+
+### 4. Event Handlers
+Two parts: XAML and C#
+
+**XAML:**
+```xml
+<Button Click="AddEmployeeButton_Click" />
+```
+
+**C#:**
+```csharp
+private async void AddEmployeeButton_Click(object sender, RoutedEventArgs e)
+{
+    // Code runs when button is clicked
+}
+```
+
+### 5. Async/Await
+```csharp
+private async void ButtonClick(object sender, RoutedEventArgs e)
+{
+    await _service.DoSomethingAsync();  // Wait for database operation
+    // Code here runs after operation completes
+}
+```
+- `async` keyword: Method can use `await`
+- `await` keyword: Wait for operation to complete
+- Keeps UI responsive during database operations
+
+## Common Tasks
+
+### Get Selected Item from DataGrid
+```csharp
+var selected = EmployeeDataGrid.SelectedItem as Employee;
+```
+
+### Get Selected Item from ComboBox
+```csharp
+var selected = EmployeeComboBox.SelectedItem as Employee;
+```
+
+### Show/Hide Controls
+```csharp
+TechnicalFieldsPanel.Visibility = Visibility.Visible;   // Show
+SafetyFieldsPanel.Visibility = Visibility.Collapsed;    // Hide
+```
+
+### Show Message Box
+```csharp
+MessageBox.Show("Message", "Title", MessageBoxButton.OK, MessageBoxImage.Information);
+```
+
+### Confirmation Dialog
+```csharp
+var result = MessageBox.Show("Are you sure?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
+if (result == MessageBoxResult.Yes)
+{
+    // User clicked Yes
+}
+```
+
+## Flow of Data
+
+1. **User Input** ? TextBox/ComboBox/CheckBox
+2. **Button Click** ? Event Handler Method
+3. **Validation** ? Check if input is valid
+4. **Service Call** ? Business logic & database operation
+5. **Reload Data** ? Get fresh data from database
+6. **Update Collection** ? ObservableCollection automatically updates UI
+7. **User Feedback** ? MessageBox shows success/error
+
+## Tips for Students
+
+1. **Always use `await`** when calling service methods that return `Task`
+2. **Validate user input** before calling services
+3. **Handle exceptions** with try-catch blocks
+4. **Give user feedback** with MessageBox after operations
+5. **Reload data** after add/update/delete operations to keep UI in sync
+6. **Use meaningful names** for controls (e.g., `FirstNameTextBox`, not `TextBox1`)
+7. **Check for null** before using selected items from DataGrid/ComboBox
+
+## Debugging Tips
+
+- Set breakpoints in event handler methods
+- Check if services are null (dependency injection issue)
+- Verify control names match between XAML and C#
+- Check database connection string in App.xaml.cs
+- Look for exceptions in MessageBox error messages
