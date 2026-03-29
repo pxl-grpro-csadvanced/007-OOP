@@ -1,11 +1,10 @@
 ﻿using Dapper;
 using EmployeeTrainingManager.Domain.Entities;
-using EmployeeTrainingManager.Domain.Repositories;
 using EmployeeTrainingManager.Infrastructure.Data;
 
 namespace EmployeeTrainingManager.Infrastructure.Repositories
 {
-    public class EmployeeRepository : IEmployeeRepository
+    public class EmployeeRepository
     {
         private readonly DbConnectionFactory _connectionFactory;
 

@@ -1,6 +1,6 @@
 ﻿namespace EmployeeTrainingManager.Domain.Entities
 {
-    public abstract class Training
+    public class Training
     {
         public string Id { get; set; }
         public string Title { get; set; }
@@ -21,8 +21,5 @@
             TrainerName = trainerName;
             DurationInHours = durationInHours;
         }
-
-        public abstract string ShowInfo();
-        public abstract string ToString();
     }
 }

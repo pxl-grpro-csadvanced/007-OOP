@@ -1,15 +1,15 @@
 ﻿using EmployeeTrainingManager.Domain.Entities;
-using EmployeeTrainingManager.Domain.Repositories;
+using EmployeeTrainingManager.Infrastructure.Repositories;
 
 namespace EmployeeTrainingManager.Application.Services
 {
     public class EnrollmentService
     {
-        private readonly IEnrollmentRepository _enrollmentRepository;
-        private readonly IEmployeeRepository _employeeRepository;
-        private readonly ITrainingRepository _trainingRepository;
+        private readonly EnrollmentRepository _enrollmentRepository;
+        private readonly EmployeeRepository _employeeRepository;
+        private readonly TrainingRepository _trainingRepository;
 
-        public EnrollmentService(IEnrollmentRepository enrollmentRepository, IEmployeeRepository employeeRepository, ITrainingRepository trainingRepository)
+        public EnrollmentService(EnrollmentRepository enrollmentRepository, EmployeeRepository employeeRepository, TrainingRepository trainingRepository)
         {
             _enrollmentRepository = enrollmentRepository;
             _employeeRepository = employeeRepository;

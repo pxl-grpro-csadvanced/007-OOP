@@ -1,9 +1,8 @@
 ﻿namespace EmployeeTrainingManager.Domain.Entities
 {
-    public class SafetyTraining : Training, ICertificateProvider
+    public class SafetyTraining : Training
     {
         public string RiskLevel { get; set; }
-        private bool _certificateGranted;
 
         public SafetyTraining()
         {
@@ -16,12 +15,7 @@
             RiskLevel = riskLevel;
         }
 
-        public void GrantCertificate()
-        {
-            _certificateGranted = true;
-        }
-
-        public override string ShowInfo()
+        public string ShowInfo()
         {
             return $"Safety Training: {Title} - Risk Level: {RiskLevel}";
         }

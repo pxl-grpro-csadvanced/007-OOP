@@ -1,13 +1,13 @@
 ﻿using EmployeeTrainingManager.Domain.Entities;
-using EmployeeTrainingManager.Domain.Repositories;
+using EmployeeTrainingManager.Infrastructure.Repositories;
 
 namespace EmployeeTrainingManager.Application.Services
 {
     public class TrainingService
     {
-        private readonly ITrainingRepository _trainingRepository;
+        private readonly TrainingRepository _trainingRepository;
 
-        public TrainingService(ITrainingRepository trainingRepository)
+        public TrainingService(TrainingRepository trainingRepository)
         {
             _trainingRepository = trainingRepository;
         }

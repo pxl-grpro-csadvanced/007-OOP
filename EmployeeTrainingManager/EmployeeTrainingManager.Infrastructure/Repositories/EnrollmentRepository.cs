@@ -1,17 +1,16 @@
 ﻿using Dapper;
 using EmployeeTrainingManager.Domain.Entities;
-using EmployeeTrainingManager.Domain.Repositories;
 using EmployeeTrainingManager.Infrastructure.Data;
 
 namespace EmployeeTrainingManager.Infrastructure.Repositories
 {
-    public class EnrollmentRepository : IEnrollmentRepository
+    public class EnrollmentRepository
     {
         private readonly DbConnectionFactory _connectionFactory;
-        private readonly IEmployeeRepository _employeeRepository;
-        private readonly ITrainingRepository _trainingRepository;
+        private readonly EmployeeRepository _employeeRepository;
+        private readonly TrainingRepository _trainingRepository;
 
-        public EnrollmentRepository(DbConnectionFactory connectionFactory, IEmployeeRepository employeeRepository, ITrainingRepository trainingRepository)
+        public EnrollmentRepository(DbConnectionFactory connectionFactory, EmployeeRepository employeeRepository, TrainingRepository trainingRepository)
         {
             _connectionFactory = connectionFactory;
             _employeeRepository = employeeRepository;

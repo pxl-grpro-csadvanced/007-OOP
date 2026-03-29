@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "bgRof+B4Ol8=",
+  "dgSpecHash": "sUDWAxOuAO4=",
   "success": true,
-  "projectFilePath": "C:\\Users\\20003926\\source\\repos\\EmployeeTrainingManager\\EmployeeTrainingManager.Presentation\\EmployeeTrainingManager.Presentation.csproj",
+  "projectFilePath": "C:\\CourseMaterial\\oplossingen-cs-advanced\\07-OOP\\EmployeeTrainingManager\\EmployeeTrainingManager.Presentation\\EmployeeTrainingManager.Presentation.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\20003926\\.nuget\\packages\\dapper\\2.1.72\\dapper.2.1.72.nupkg.sha512",
     "C:\\Users\\20003926\\.nuget\\packages\\microsoft.bcl.cryptography\\9.0.13\\microsoft.bcl.cryptography.9.0.13.nupkg.sha512",

@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
+  <Class Name="EmployeeTrainingManager.Domain.Entities.Employee">
+    <Position X="13.25" Y="2.25" Width="3.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAg=</HashCode>
+      <FileName>Entities\Employee.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="EmployeeTrainingManager.Domain.Entities.Enrollment">
+    <Position X="17" Y="0.5" Width="3.75" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAAAAAGAAAAAAAAAAAAgAAAAA=</HashCode>
+      <FileName>Entities\Enrollment.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="EmployeeTrainingManager.Domain.Entities.SafetyTraining">
+    <Position X="12.5" Y="5" Width="5.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgAAAAAAAAEBAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Entities\SafetyTraining.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="EmployeeTrainingManager.Domain.Entities.TechnicalTraining">
+    <Position X="6.5" Y="5" Width="5.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAEBAAAAAAAAAAAgAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Entities\TechnicalTraining.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="EmployeeTrainingManager.Domain.Entities.Training">
+    <Position X="8.25" Y="1.25" Width="4.5" />
+    <TypeIdentifier>
+      <HashCode>EAACAAAAAAAAAEAAAAAAAAAAAAACAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Entities\Training.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\20003926\\source\\repos\\EmployeeTrainingManager\\EmployeeTrainingManager.Domain\\EmployeeTrainingManager.Domain.csproj": {}
+    "C:\\CourseMaterial\\oplossingen-cs-advanced\\07-OOP\\EmployeeTrainingManager\\EmployeeTrainingManager.Domain\\EmployeeTrainingManager.Domain.csproj": {}
   },
   "projects": {
-    "C:\\Users\\20003926\\source\\repos\\EmployeeTrainingManager\\EmployeeTrainingManager.Domain\\EmployeeTrainingManager.Domain.csproj": {
+    "C:\\CourseMaterial\\oplossingen-cs-advanced\\07-OOP\\EmployeeTrainingManager\\EmployeeTrainingManager.Domain\\EmployeeTrainingManager.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\20003926\\source\\repos\\EmployeeTrainingManager\\EmployeeTrainingManager.Domain\\EmployeeTrainingManager.Domain.csproj",
+        "projectUniqueName": "C:\\CourseMaterial\\oplossingen-cs-advanced\\07-OOP\\EmployeeTrainingManager\\EmployeeTrainingManager.Domain\\EmployeeTrainingManager.Domain.csproj",
         "projectName": "EmployeeTrainingManager.Domain",
-        "projectPath": "C:\\Users\\20003926\\source\\repos\\EmployeeTrainingManager\\EmployeeTrainingManager.Domain\\EmployeeTrainingManager.Domain.csproj",
+        "projectPath": "C:\\CourseMaterial\\oplossingen-cs-advanced\\07-OOP\\EmployeeTrainingManager\\EmployeeTrainingManager.Domain\\EmployeeTrainingManager.Domain.csproj",
         "packagesPath": "C:\\Users\\20003926\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\20003926\\source\\repos\\EmployeeTrainingManager\\EmployeeTrainingManager.Domain\\obj\\",
+        "outputPath": "C:\\CourseMaterial\\oplossingen-cs-advanced\\07-OOP\\EmployeeTrainingManager\\EmployeeTrainingManager.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

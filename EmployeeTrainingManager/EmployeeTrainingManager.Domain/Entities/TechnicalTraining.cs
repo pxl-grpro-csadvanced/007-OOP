@@ -15,7 +15,7 @@
             Technology = technology;
         }
 
-        public override string ShowInfo()
+        public string ShowInfo()
         {
             return $"Technical Training: {Title} - Technology: {Technology}";
         }
