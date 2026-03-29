@@ -7,11 +7,30 @@ using EmployeeTrainingManager.Infrastructure.Repositories;
 
 namespace EmployeeTrainingManager.Presentation;
 
+public class EmployeeDisplay
+{
+    public int Id { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public Employee OriginalEmployee { get; set; } = null!;
+}
+
+public class EnrollmentDisplay
+{
+    public int Id { get; set; }
+    public string EmployeeName { get; set; } = string.Empty;
+    public string TrainingTitle { get; set; } = string.Empty;
+    public bool IsBillable { get; set; }
+    public Enrollment OriginalEnrollment { get; set; } = null!;
+}
+
 public partial class MainWindow : Window
 {
     private readonly EmployeeService _employeeService;
     private readonly TrainingService _trainingService;
     private readonly EnrollmentService _enrollmentService;
+    private List<Employee> _allEmployees = new();
+    private List<Training> _allTrainings = new();
 
     public MainWindow()
     {
@@ -42,8 +61,28 @@ public partial class MainWindow : Window
         try
         {
             var employees = await _employeeService.GetAllEmployeesAsync();
-            EmployeeDataGrid.ItemsSource = employees;
-            EmployeeComboBox.ItemsSource = employees;
+            _allEmployees = employees.ToList();
+            
+            var employeeDisplayList = _allEmployees.Select(e => new EmployeeDisplay
+            {
+                Id = e.Id,
+                FirstName = e.FirstName,
+                LastName = e.LastName,
+                OriginalEmployee = e
+            }).ToList();
+            
+            EmployeeDataGrid.ItemsSource = employeeDisplayList;
+            
+            EmployeeComboBox.Items.Clear();
+            foreach (var employee in _allEmployees)
+            {
+                var comboBoxItem = new ComboBoxItem
+                {
+                    Content = $"{employee.FirstName} {employee.LastName}",
+                    Tag = employee
+                };
+                EmployeeComboBox.Items.Add(comboBoxItem);
+            }
         }
         catch (Exception ex)
         {
@@ -56,8 +95,30 @@ public partial class MainWindow : Window
         try
         {
             var trainings = await _trainingService.GetAllTrainingsAsync();
-            TrainingListBox.ItemsSource = trainings;
-            TrainingComboBox.ItemsSource = trainings;
+            _allTrainings = trainings.ToList();
+            
+            TrainingListBox.Items.Clear();
+            foreach (var training in _allTrainings)
+            {
+                var displayText = $"{training.Title}\nTrainer: {training.TrainerName}";
+                var listBoxItem = new ListBoxItem
+                {
+                    Content = displayText,
+                    Tag = training
+                };
+                TrainingListBox.Items.Add(listBoxItem);
+            }
+            
+            TrainingComboBox.Items.Clear();
+            foreach (var training in _allTrainings)
+            {
+                var comboBoxItem = new ComboBoxItem
+                {
+                    Content = training.Title,
+                    Tag = training
+                };
+                TrainingComboBox.Items.Add(comboBoxItem);
+            }
         }
         catch (Exception ex)
         {
@@ -70,7 +131,17 @@ public partial class MainWindow : Window
         try
         {
             var enrollments = await _enrollmentService.GetEnrollmentsByEmployeeIdAsync(employeeId);
-            EnrollmentDataGrid.ItemsSource = enrollments;
+            
+            var enrollmentDisplayList = enrollments.Select(e => new EnrollmentDisplay
+            {
+                Id = e.Id,
+                EmployeeName = $"{e.Employee.FirstName} {e.Employee.LastName}",
+                TrainingTitle = e.Training.Title,
+                IsBillable = e.IsBillable,
+                OriginalEnrollment = e
+            }).ToList();
+            
+            EnrollmentDataGrid.ItemsSource = enrollmentDisplayList;
         }
         catch (Exception ex)
         {
@@ -105,13 +176,14 @@ public partial class MainWindow : Window
 
     private async void DeleteEmployeeButton_Click(object sender, RoutedEventArgs e)
     {
-        var selectedEmployee = EmployeeDataGrid.SelectedItem as Employee;
-        if (selectedEmployee == null)
+        var selectedDisplay = EmployeeDataGrid.SelectedItem as EmployeeDisplay;
+        if (selectedDisplay == null)
         {
             MessageBox.Show("Please select an employee to delete", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
+        var selectedEmployee = selectedDisplay.OriginalEmployee;
         var result = MessageBox.Show($"Are you sure you want to delete {selectedEmployee.FirstName} {selectedEmployee.LastName}?",
             "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
@@ -187,12 +259,15 @@ public partial class MainWindow : Window
 
     private async void DeleteTrainingButton_Click(object sender, RoutedEventArgs e)
     {
-        var selectedTraining = TrainingListBox.SelectedItem as Training;
-        if (selectedTraining == null)
+        var selectedItem = TrainingListBox.SelectedItem as ListBoxItem;
+        if (selectedItem == null)
         {
             MessageBox.Show("Please select a training to delete", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
+
+        var selectedTraining = selectedItem.Tag as Training;
+        if (selectedTraining == null) return;
 
         var result = MessageBox.Show($"Are you sure you want to delete {selectedTraining.Title}?",
             "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
@@ -214,14 +289,19 @@ public partial class MainWindow : Window
 
     private async void EnrollButton_Click(object sender, RoutedEventArgs e)
     {
-        var selectedEmployee = EmployeeComboBox.SelectedItem as Employee;
-        var selectedTraining = TrainingComboBox.SelectedItem as Training;
+        var selectedEmployeeItem = EmployeeComboBox.SelectedItem as ComboBoxItem;
+        var selectedTrainingItem = TrainingComboBox.SelectedItem as ComboBoxItem;
 
-        if (selectedEmployee == null || selectedTraining == null)
+        if (selectedEmployeeItem == null || selectedTrainingItem == null)
         {
             MessageBox.Show("Please select both an employee and a training", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
+
+        var selectedEmployee = selectedEmployeeItem.Tag as Employee;
+        var selectedTraining = selectedTrainingItem.Tag as Training;
+        
+        if (selectedEmployee == null || selectedTraining == null) return;
 
         try
         {
@@ -239,13 +319,14 @@ public partial class MainWindow : Window
 
     private async void DeleteEnrollmentButton_Click(object sender, RoutedEventArgs e)
     {
-        var selectedEnrollment = EnrollmentDataGrid.SelectedItem as Enrollment;
-        if (selectedEnrollment == null)
+        var selectedDisplay = EnrollmentDataGrid.SelectedItem as EnrollmentDisplay;
+        if (selectedDisplay == null)
         {
             MessageBox.Show("Please select an enrollment to delete", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
+        var selectedEnrollment = selectedDisplay.OriginalEnrollment;
         var result = MessageBox.Show("Are you sure you want to delete this enrollment?",
             "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
@@ -254,8 +335,8 @@ public partial class MainWindow : Window
             try
             {
                 await _enrollmentService.DeleteEnrollmentAsync(selectedEnrollment.Id);
-                var currentEmployee = EmployeeComboBox.SelectedItem as Employee;
-                if (currentEmployee != null)
+                var currentEmployeeItem = EmployeeComboBox.SelectedItem as ComboBoxItem;
+                if (currentEmployeeItem?.Tag is Employee currentEmployee)
                 {
                     await LoadEmployeeEnrollments(currentEmployee.Id);
                 }
@@ -277,10 +358,10 @@ public partial class MainWindow : Window
 
     private async void EmployeeDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        var selectedEmployee = EmployeeDataGrid.SelectedItem as Employee;
-        if (selectedEmployee != null)
+        var selectedDisplay = EmployeeDataGrid.SelectedItem as EmployeeDisplay;
+        if (selectedDisplay != null)
         {
-            await LoadEmployeeEnrollments(selectedEmployee.Id);
+            await LoadEmployeeEnrollments(selectedDisplay.OriginalEmployee.Id);
         }
     }
 

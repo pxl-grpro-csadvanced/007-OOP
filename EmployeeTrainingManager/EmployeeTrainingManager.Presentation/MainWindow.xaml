@@ -19,7 +19,6 @@
         </StackPanel>
 
         <TabControl Grid.Row="1">
-            <!-- Employees Tab -->
             <TabItem Header="Employees">
                 <Grid Margin="10">
                     <Grid.ColumnDefinitions>
@@ -36,16 +35,11 @@
                             </Grid.RowDefinitions>
 
                             <DataGrid Name="EmployeeDataGrid" Grid.Row="0"
-                                      AutoGenerateColumns="False" 
+                                      AutoGenerateColumns="True" 
                                       IsReadOnly="True"
                                       SelectionMode="Single"
                                       SelectionChanged="EmployeeDataGrid_SelectionChanged"
                                       Margin="5">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="Auto"/>
-                                    <DataGridTextColumn Header="First Name" Binding="{Binding FirstName}" Width="*"/>
-                                    <DataGridTextColumn Header="Last Name" Binding="{Binding LastName}" Width="*"/>
-                                </DataGrid.Columns>
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
@@ -89,14 +83,6 @@
                             </Grid.RowDefinitions>
 
                             <ListBox Name="TrainingListBox" Grid.Row="0" Margin="5">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Margin="5">
-                                            <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14"/>
-                                            <TextBlock Text="{Binding TrainerName, StringFormat='Trainer: {0}'}" FontSize="11" Foreground="DarkGray"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
                             </ListBox>
 
                             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
@@ -175,21 +161,12 @@
                             <StackPanel Grid.Column="0">
                                 <Label Content="Select Employee:"/>
                                 <ComboBox Name="EmployeeComboBox" Height="30">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock>
-                                                <Run Text="{Binding FirstName}"/>
-                                                <Run Text=" "/>
-                                                <Run Text="{Binding LastName}"/>
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
                                 </ComboBox>
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
                                 <Label Content="Select Training:"/>
-                                <ComboBox Name="TrainingComboBox" DisplayMemberPath="Title" Height="30"/>
+                                <ComboBox Name="TrainingComboBox" Height="30"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="4" VerticalAlignment="Bottom">
@@ -213,22 +190,9 @@
                             </Grid.RowDefinitions>
 
                             <DataGrid Name="EnrollmentDataGrid" Grid.Row="0"
-                                      AutoGenerateColumns="False" 
+                                      AutoGenerateColumns="True" 
                                       IsReadOnly="True"
                                       Margin="5">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="Auto"/>
-                                    <DataGridTextColumn Header="Employee" Width="*">
-                                        <DataGridTextColumn.Binding>
-                                            <MultiBinding StringFormat="{}{0} {1}">
-                                                <Binding Path="Employee.FirstName"/>
-                                                <Binding Path="Employee.LastName"/>
-                                            </MultiBinding>
-                                        </DataGridTextColumn.Binding>
-                                    </DataGridTextColumn>
-                                    <DataGridTextColumn Header="Training" Binding="{Binding Training.Title}" Width="*"/>
-                                    <DataGridCheckBoxColumn Header="Billable" Binding="{Binding IsBillable}" Width="Auto"/>
-                                </DataGrid.Columns>
                             </DataGrid>
 
                             <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
