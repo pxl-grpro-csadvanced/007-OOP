@@ -1,0 +1,217 @@
+<Window x:Class="VehicleRentalSystem.Presentation.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Vehicle Rental System" Height="700" Width="1200" WindowStartupLocation="CenterScreen">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Vehicle Rental Management System" FontSize="24" FontWeight="Bold" Margin="0,0,0,20" HorizontalAlignment="Center"/>
+
+        <TabControl Grid.Row="1">
+            <!-- Vehicles Tab -->
+            <TabItem Header="Vehicles">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Vehicle List -->
+                    <GroupBox Grid.Column="0" Header="Vehicle List" Margin="0,0,10,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <DataGrid x:Name="VehicleDataGrid" Grid.Row="0" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
+                                    <DataGridTextColumn Header="License Plate" Binding="{Binding LicensePlate}" Width="120"/>
+                                    <DataGridTextColumn Header="Type" Binding="{Binding VehicleType}" Width="100"/>
+                                    <DataGridTextColumn Header="Brand" Binding="{Binding Brand}" Width="120"/>
+                                    <DataGridTextColumn Header="Model" Binding="{Binding Model}" Width="120"/>
+                                    <DataGridTextColumn Header="Year" Binding="{Binding Year}" Width="80"/>
+                                    <DataGridTextColumn Header="Daily Rate" Binding="{Binding DailyRate, StringFormat=C}" Width="100"/>
+                                    <DataGridCheckBoxColumn Header="Available" Binding="{Binding IsAvailable}" Width="80"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                <Button x:Name="RefreshVehiclesButton" Content="Refresh" Width="100" Margin="5,0" Click="RefreshVehiclesButton_Click"/>
+                                <Button x:Name="DeleteVehicleButton" Content="Delete Vehicle" Width="120" Margin="5,0" Click="DeleteVehicleButton_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Add Vehicle Form -->
+                    <GroupBox Grid.Column="1" Header="Add Vehicle">
+                        <StackPanel>
+                            <ComboBox x:Name="VehicleTypeComboBox" Margin="5" SelectionChanged="VehicleTypeComboBox_SelectionChanged">
+                                <ComboBoxItem Content="Car" IsSelected="True"/>
+                                <ComboBoxItem Content="Motorcycle"/>
+                                <ComboBoxItem Content="Truck"/>
+                            </ComboBox>
+
+                            <TextBox x:Name="LicensePlateTextBox" Margin="5" />
+                            <TextBlock Text="License Plate" Margin="5,0,5,10" Foreground="Gray"/>
+
+                            <TextBox x:Name="BrandTextBox" Margin="5" />
+                            <TextBlock Text="Brand" Margin="5,0,5,10" Foreground="Gray"/>
+
+                            <TextBox x:Name="ModelTextBox" Margin="5" />
+                            <TextBlock Text="Model" Margin="5,0,5,10" Foreground="Gray"/>
+
+                            <TextBox x:Name="YearTextBox" Margin="5" />
+                            <TextBlock Text="Year" Margin="5,0,5,10" Foreground="Gray"/>
+
+                            <TextBox x:Name="DailyRateTextBox" Margin="5" />
+                            <TextBlock Text="Daily Rate" Margin="5,0,5,10" Foreground="Gray"/>
+
+                            <!-- Car Specific Fields -->
+                            <StackPanel x:Name="CarFieldsPanel" Visibility="Visible">
+                                <TextBox x:Name="NumberOfDoorsTextBox" Margin="5" />
+                                <TextBlock Text="Number of Doors" Margin="5,0,5,10" Foreground="Gray"/>
+
+                                <ComboBox x:Name="FuelTypeComboBox" Margin="5">
+                                    <ComboBoxItem Content="Petrol" IsSelected="True"/>
+                                    <ComboBoxItem Content="Diesel"/>
+                                    <ComboBoxItem Content="Electric"/>
+                                    <ComboBoxItem Content="Hybrid"/>
+                                </ComboBox>
+                                <TextBlock Text="Fuel Type" Margin="5,0,5,10" Foreground="Gray"/>
+                            </StackPanel>
+
+                            <!-- Motorcycle Specific Fields -->
+                            <StackPanel x:Name="MotorcycleFieldsPanel" Visibility="Collapsed">
+                                <TextBox x:Name="EngineCapacityTextBox" Margin="5" />
+                                <TextBlock Text="Engine Capacity (cc)" Margin="5,0,5,10" Foreground="Gray"/>
+
+                                <CheckBox x:Name="HasSidecarCheckBox" Content="Has Sidecar" Margin="5"/>
+                            </StackPanel>
+
+                            <!-- Truck Specific Fields -->
+                            <StackPanel x:Name="TruckFieldsPanel" Visibility="Collapsed">
+                                <TextBox x:Name="LoadCapacityTextBox" Margin="5" />
+                                <TextBlock Text="Load Capacity (kg)" Margin="5,0,5,10" Foreground="Gray"/>
+
+                                <TextBox x:Name="NumberOfAxlesTextBox" Margin="5" />
+                                <TextBlock Text="Number of Axles" Margin="5,0,5,10" Foreground="Gray"/>
+                            </StackPanel>
+
+                            <Button x:Name="AddVehicleButton" Content="Add Vehicle" Margin="5,20,5,5" Click="AddVehicleButton_Click"/>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- Customers Tab -->
+            <TabItem Header="Customers">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Customer List -->
+                    <GroupBox Grid.Column="0" Header="Customer List" Margin="0,0,10,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <DataGrid x:Name="CustomerDataGrid" Grid.Row="0" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
+                                    <DataGridTextColumn Header="First Name" Binding="{Binding FirstName}" Width="150"/>
+                                    <DataGridTextColumn Header="Last Name" Binding="{Binding LastName}" Width="150"/>
+                                    <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
+                                    <DataGridTextColumn Header="Phone" Binding="{Binding PhoneNumber}" Width="120"/>
+                                    <DataGridTextColumn Header="License" Binding="{Binding DriverLicenseNumber}" Width="120"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                <Button x:Name="RefreshCustomersButton" Content="Refresh" Width="100" Margin="5,0" Click="RefreshCustomersButton_Click"/>
+                                <Button x:Name="DeleteCustomerButton" Content="Delete Customer" Width="120" Margin="5,0" Click="DeleteCustomerButton_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Add Customer Form -->
+                    <GroupBox Grid.Column="1" Header="Add Customer">
+                        <StackPanel>
+                            <TextBox x:Name="CustomerFirstNameTextBox" Margin="5" />
+                            <TextBlock Text="First Name" Margin="5,0,5,10" Foreground="Gray"/>
+
+                            <TextBox x:Name="CustomerLastNameTextBox" Margin="5" />
+                            <TextBlock Text="Last Name" Margin="5,0,5,10" Foreground="Gray"/>
+
+                            <TextBox x:Name="EmailTextBox" Margin="5" />
+                            <TextBlock Text="Email" Margin="5,0,5,10" Foreground="Gray"/>
+
+                            <TextBox x:Name="PhoneNumberTextBox" Margin="5" />
+                            <TextBlock Text="Phone Number" Margin="5,0,5,10" Foreground="Gray"/>
+
+                            <TextBox x:Name="DriverLicenseTextBox" Margin="5" />
+                            <TextBlock Text="Driver License" Margin="5,0,5,10" Foreground="Gray"/>
+
+                            <Button x:Name="AddCustomerButton" Content="Add Customer" Margin="5,20,5,5" Click="AddCustomerButton_Click"/>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <!-- Rentals Tab -->
+            <TabItem Header="Rentals">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Rental List -->
+                    <GroupBox Grid.Row="0" Header="Active Rentals">
+                        <DataGrid x:Name="RentalDataGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
+                                <DataGridTextColumn Header="Customer" Binding="{Binding Customer.GetFullName}" Width="150"/>
+                                <DataGridTextColumn Header="Vehicle" Binding="{Binding Vehicle}" Width="200"/>
+                                <DataGridTextColumn Header="Start Date" Binding="{Binding StartDate, StringFormat=d}" Width="100"/>
+                                <DataGridTextColumn Header="End Date" Binding="{Binding EndDate, StringFormat=d}" Width="100"/>
+                                <DataGridTextColumn Header="Days" Binding="{Binding GetRentalDays}" Width="70"/>
+                                <DataGridTextColumn Header="Total Cost" Binding="{Binding TotalCost, StringFormat=C}" Width="100"/>
+                                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="70"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </GroupBox>
+
+                    <!-- Create Rental Form -->
+                    <GroupBox Grid.Row="1" Header="Create New Rental" Margin="0,10,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                            <ComboBox x:Name="RentalCustomerComboBox" Width="200" Margin="5"/>
+                            <TextBlock Text="Customer" VerticalAlignment="Center" Margin="0,0,20,0" Foreground="Gray"/>
+
+                            <ComboBox x:Name="RentalVehicleComboBox" Width="250" Margin="5"/>
+                            <TextBlock Text="Vehicle (Available Only)" VerticalAlignment="Center" Margin="0,0,20,0" Foreground="Gray"/>
+
+                            <DatePicker x:Name="StartDatePicker" Width="120" Margin="5"/>
+                            <TextBlock Text="Start Date" VerticalAlignment="Center" Margin="0,0,20,0" Foreground="Gray"/>
+
+                            <DatePicker x:Name="EndDatePicker" Width="120" Margin="5"/>
+                            <TextBlock Text="End Date" VerticalAlignment="Center" Margin="0,0,20,0" Foreground="Gray"/>
+
+                            <Button x:Name="CreateRentalButton" Content="Create Rental" Width="120" Margin="20,5,5,5" Click="CreateRentalButton_Click"/>
+                            <Button x:Name="CompleteRentalButton" Content="Complete Selected" Width="130" Margin="5" Click="CompleteRentalButton_Click"/>
+                            <Button x:Name="RefreshRentalsButton" Content="Refresh" Width="100" Margin="5" Click="RefreshRentalsButton_Click"/>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

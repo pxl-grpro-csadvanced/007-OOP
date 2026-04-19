@@ -1,0 +1,330 @@
+# Vehicle Rental System - Exercise Instructions
+
+## ?? Exercise Goals
+
+By completing this exercise, you will demonstrate understanding of:
+- **Inheritance** and abstract classes
+- **Interfaces** and their implementation
+- **Polymorphism** in action
+- **Dapper** ORM for database access
+- **SQL Client** for database connectivity
+- **DDD (Domain-Driven Design)** architecture
+
+---
+
+## ?? Part 1: Understanding the Current Implementation (30 minutes)
+
+### Task 1.1: Explore the Domain Layer
+1. Open `VehicleRentalSystem.Domain` project
+2. Study the `Vehicle` abstract class
+   - Identify the abstract methods
+   - Note the common properties
+3. Examine each concrete vehicle type (`Car`, `Motorcycle`, `Truck`)
+   - How do they override the abstract methods?
+   - What makes each implementation unique?
+4. Study the `IInsurable` interface
+   - Which classes implement it?
+   - Why doesn't `Truck` implement it?
+
+**Questions to Answer:**
+- What happens when you call `CalculateRentalCost()` on different vehicle types?
+- How does polymorphism work in the vehicle hierarchy?
+- Why use an abstract class instead of an interface for `Vehicle`?
+
+### Task 1.2: Examine the Infrastructure Layer
+1. Open `VehicleRentalSystem.Infrastructure` project
+2. Study `DbConnectionFactory`
+   - How does it create database connections?
+3. Review `VehicleRepository`
+   - How does Dapper map database rows to vehicle objects?
+   - How is the vehicle type determined from the database?
+4. Look at the `CustomerRepository` and `RentalRepository`
+   - Compare their simplicity to `VehicleRepository`
+
+**Questions to Answer:**
+- Why do all repositories depend on `DbConnectionFactory`?
+- How does Dapper simplify database access compared to ADO.NET?
+- What is the Single Table Inheritance pattern used in `Vehicles` table?
+
+### Task 1.3: Review the Application Layer
+1. Open `VehicleRentalSystem.Application` project
+2. Study the service classes
+   - What business logic do they contain?
+   - How do they use repositories?
+
+---
+
+## ?? Part 2: Database Setup and Testing (15 minutes)
+
+### Task 2.1: Set Up the Database
+1. Open SQL Server Management Studio (SSMS)
+2. Connect to your SQL Server instance (usually `.\sqlexpress`)
+3. Open the `DatabaseSetup.sql` file
+4. Execute the entire script
+5. Verify the following:
+   - Database `VehicleRentalDb` is created
+   - Tables `Customers`, `Vehicles`, `Rentals` exist
+   - Sample data is loaded
+
+### Task 2.2: Explore the Database
+Run these queries to understand the data:
+
+```sql
+-- View all vehicles with their types
+SELECT VehicleType, Brand, Model, DailyRate, IsAvailable 
+FROM Vehicles;
+
+-- View cars only
+SELECT * FROM Vehicles WHERE VehicleType = 'Car';
+
+-- View available vehicles
+SELECT * FROM Vehicles WHERE IsAvailable = 1;
+
+-- View all rentals with customer and vehicle info
+SELECT 
+    r.Id,
+    c.FirstName + ' ' + c.LastName AS Customer,
+    v.Brand + ' ' + v.Model AS Vehicle,
+    r.StartDate,
+    r.EndDate,
+    r.TotalCost
+FROM Rentals r
+JOIN Customers c ON r.CustomerId = c.Id
+JOIN Vehicles v ON r.VehicleId = v.Id;
+```
+
+---
+
+## ?? Part 3: Run the Application (20 minutes)
+
+### Task 3.1: Configure and Run
+1. Open the solution in Visual Studio
+2. Update the connection string in `MainWindow.xaml.cs` if needed
+3. Set `VehicleRentalSystem.Presentation` as startup project
+4. Run the application (F5)
+
+### Task 3.2: Test Vehicle Management
+1. Switch to the **Vehicles** tab
+2. Add a new car:
+   - License Plate: TEST-001
+   - Brand: Ford
+   - Model: Focus
+   - Year: 2024
+   - Daily Rate: 55.00
+   - Doors: 4
+   - Fuel Type: Hybrid
+3. Add a new motorcycle:
+   - License Plate: BIKE-001
+   - Brand: Kawasaki
+   - Model: Ninja
+   - Year: 2024
+   - Daily Rate: 65.00
+   - Engine: 650
+   - Sidecar: No
+4. Verify both appear in the grid
+
+### Task 3.3: Test Customer Management
+1. Switch to the **Customers** tab
+2. Add a new customer:
+   - First Name: Your first name
+   - Last Name: Your last name
+   - Email: your.email@example.com
+   - Phone: +32-999-888-777
+   - License: DL999999
+3. Verify the customer appears in the grid
+
+### Task 3.4: Test Rental Management
+1. Switch to the **Rentals** tab
+2. Create a new rental:
+   - Customer: Select the customer you just created
+   - Vehicle: Select an available vehicle
+   - Start Date: Today
+   - End Date: 5 days from today
+3. Observe the cost calculation in the success message
+   - Note the rental cost
+   - Note the insurance cost (if applicable)
+   - Note the total cost
+4. Verify the vehicle is now marked as unavailable
+5. Complete the rental
+6. Verify the vehicle is available again
+
+---
+
+## ?? Part 4: Extend the System (60-90 minutes)
+
+### Task 4.1: Add a New Vehicle Type - Van
+**Objective:** Practice inheritance and polymorphism
+
+1. **Create the Van entity** (`VehicleRentalSystem.Domain/Entities/Van.cs`):
+   ```csharp
+   public class Van : Vehicle
+   {
+       public int PassengerCapacity { get; set; }
+       public bool HasRefrigeration { get; set; }
+       
+       // Implement abstract methods
+       // Rental cost: +€30/day if refrigerated
+   }
+   ```
+
+2. **Update the database**:
+   ```sql
+   ALTER TABLE Vehicles ADD PassengerCapacity INT NULL;
+   ALTER TABLE Vehicles ADD HasRefrigeration BIT NULL;
+   
+   -- Add sample van
+   INSERT INTO Vehicles (LicensePlate, Brand, Model, Year, DailyRate, IsAvailable, 
+                        VehicleType, PassengerCapacity, HasRefrigeration) 
+   VALUES ('VAN-001', 'Mercedes', 'Sprinter Passenger', 2024, 80.00, 1, 
+          'Van', 12, 0);
+   ```
+
+3. **Update VehicleRepository** to handle Van type
+4. **Update VehicleService** to add `AddVanAsync` method
+5. **Update WPF UI** to add Van option and fields
+6. **Test:** Add a van through the UI and create a rental
+
+### Task 4.2: Implement Distance-Based Pricing
+**Objective:** Practice polymorphism and business logic
+
+1. Add `EstimatedDistance` property to `Rental` entity
+2. Add abstract method `decimal CalculateDistanceSurcharge(int kilometers)` to `Vehicle`
+3. Implement in each vehicle type:
+   - Car: €0.15/km
+   - Motorcycle: €0.10/km
+   - Truck: €0.25/km
+   - Van: €0.20/km
+4. Update `RentalService.CreateRentalAsync` to include distance in calculation
+5. Update UI to accept distance input
+
+### Task 4.3: Add Premium Insurance for Cars
+**Objective:** Practice interface extension
+
+1. Create new interface `IPremiumInsurable`:
+   ```csharp
+   public interface IPremiumInsurable : IInsurable
+   {
+       decimal CalculatePremiumInsuranceCost(int days);
+       bool IsPremiumInsuranceAvailable();
+   }
+   ```
+
+2. Update `Car` to implement `IPremiumInsurable`
+   - Premium insurance: €25/day
+   - Available only for cars newer than 2022
+
+3. Update rental creation to offer premium insurance option
+4. Update UI with checkbox for premium insurance
+
+### Task 4.4: Implement Vehicle Maintenance Tracking
+**Objective:** Practice extending the domain model
+
+1. Create new entity `MaintenanceRecord`:
+   ```csharp
+   public class MaintenanceRecord
+   {
+       public int Id { get; set; }
+       public int VehicleId { get; set; }
+       public DateTime MaintenanceDate { get; set; }
+       public string Description { get; set; }
+       public decimal Cost { get; set; }
+       public int Mileage { get; set; }
+   }
+   ```
+
+2. Create table, repository, and service
+3. Add UI tab for maintenance management
+4. Prevent rental of vehicles needing maintenance
+
+---
+
+## ?? Part 5: Advanced Challenges (Optional)
+
+### Challenge 1: Implement Seasonal Pricing
+- Add seasonal multipliers (summer: 1.5x, winter: 0.8x)
+- Update `CalculateRentalCost` to consider season
+- Use Strategy pattern for pricing strategies
+
+### Challenge 2: Add Customer Rating System
+- Add `Rating` property to `Customer`
+- Implement discount based on rating
+- 5-star customers get 10% discount
+
+### Challenge 3: Implement Reservation System
+- Create `Reservation` entity
+- Allow booking vehicles for future dates
+- Prevent double-booking
+
+### Challenge 4: Add Validation
+- Validate email format
+- Validate phone number format
+- Validate driver license format
+- Prevent rental overlap
+
+### Challenge 5: Implement Unit of Work Pattern
+- Create `IUnitOfWork` interface
+- Wrap all repository operations in transactions
+- Ensure data consistency
+
+---
+
+## ? Evaluation Criteria
+
+### Understanding (30%)
+- [ ] Can explain inheritance hierarchy
+- [ ] Can explain polymorphism in practice
+- [ ] Can explain interface usage
+- [ ] Can explain DDD layer separation
+
+### Implementation (40%)
+- [ ] Van vehicle type works correctly
+- [ ] Distance-based pricing implemented
+- [ ] Premium insurance works
+- [ ] Maintenance tracking functional
+
+### Code Quality (20%)
+- [ ] Follows existing code style
+- [ ] Proper error handling
+- [ ] No code duplication
+- [ ] Meaningful variable names
+
+### Testing (10%)
+- [ ] All features manually tested
+- [ ] Edge cases considered
+- [ ] Database properly updated
+- [ ] UI works without errors
+
+---
+
+## ?? Resources
+
+- **Dapper Tutorial:** https://dapper-tutorial.net/
+- **C# Inheritance:** https://docs.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/inheritance
+- **Polymorphism:** https://docs.microsoft.com/en-us/dotnet/csharp/fundamentals/object-oriented/polymorphism
+- **WPF Data Binding:** https://docs.microsoft.com/en-us/dotnet/desktop/wpf/data/
+
+---
+
+## ?? Tips
+
+1. **Before coding, plan:** Draw class diagrams for new features
+2. **Test incrementally:** Don't write everything before testing
+3. **Use debugging:** Set breakpoints to understand flow
+4. **Read error messages:** They often tell you exactly what's wrong
+5. **Commit often:** Use Git to save your progress
+
+---
+
+## ?? Reflection Questions
+
+After completing the exercise, reflect on:
+
+1. **What was the most challenging part?**
+2. **How does polymorphism make the code more maintainable?**
+3. **What are the benefits of using Dapper over raw ADO.NET?**
+4. **How does the layered architecture help with separation of concerns?**
+5. **What improvements would you make to this system?**
+
+---
+
+Good luck with your exercise! ??
