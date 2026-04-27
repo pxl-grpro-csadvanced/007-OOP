@@ -24,6 +24,7 @@ namespace VehicleRentalSystem.Domain.Entities
         public override decimal CalculateRentalCost(int days)
         {
             decimal cost = DailyRate * days;
+            // Extra kost voor zware vrachtwagens
             if (LoadCapacity > 5000)
             {
                 cost += 50m * days;
