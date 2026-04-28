@@ -24,7 +24,7 @@ namespace VehicleRentalSystem.Infrastructure.Repositories
 
         public Task<IEnumerable<Customer>> GetAllAsync()
         {
-            //
+            //get via api
             throw new NotImplementedException();
         }
 

@@ -18,7 +18,7 @@ public class VehicleRepository : IVehicleRepository
         const string sql = "SELECT * FROM Vehicles";
         using (var connection = _connectionFactory.CreateConnection())
         {
-            var results = await connection.QueryAsync(sql);
+            var results = await connection.QueryAsync<dynamic>(sql);
             return results.Select(MapToVehicle);
         }
     }
@@ -27,7 +27,7 @@ public class VehicleRepository : IVehicleRepository
     {
         const string sql = "SELECT * FROM Vehicles WHERE Id = @Id";
         using var connection = _connectionFactory.CreateConnection();
-        var result = await connection.QuerySingleOrDefaultAsync(sql, new { Id = id });
+        var result = await connection.QuerySingleOrDefaultAsync<dynamic>(sql, new { Id = id });
         return result == null ? null : MapToVehicle(result);
     }
 
@@ -114,45 +114,53 @@ public class VehicleRepository : IVehicleRepository
     {
         string vehicleType = row.VehicleType;
 
-        return vehicleType switch
+         switch (vehicleType)
         {
-            "Car" => new Car
-            {
-                Id = row.Id,
-                LicensePlate = row.LicensePlate,
-                Brand = row.Brand,
-                Model = row.Model,
-                Year = row.Year,
-                DailyRate = row.DailyRate,
-                IsAvailable = row.IsAvailable,
-                NumberOfDoors = row.NumberOfDoors ?? 0,
-                FuelType = row.FuelType ?? string.Empty
-            },
-            "Motorcycle" => new Motorcycle
-            {
-                Id = row.Id,
-                LicensePlate = row.LicensePlate,
-                Brand = row.Brand,
-                Model = row.Model,
-                Year = row.Year,
-                DailyRate = row.DailyRate,
-                IsAvailable = row.IsAvailable,
-                EngineCapacity = row.EngineCapacity ?? 0,
-                HasSidecar = row.HasSidecar ?? false
-            },
-            "Truck" => new Truck
-            {
-                Id = row.Id,
-                LicensePlate = row.LicensePlate,
-                Brand = row.Brand,
-                Model = row.Model,
-                Year = row.Year,
-                DailyRate = row.DailyRate,
-                IsAvailable = row.IsAvailable,
-                LoadCapacity = row.LoadCapacity ?? 0m,
-                NumberOfAxles = row.NumberOfAxles ?? 0
-            },
-            _ => throw new InvalidOperationException($"Unknown vehicle type: {vehicleType}")
+            case "Car":
+                return new Car
+                {
+                    Id = row.Id,
+                    LicensePlate = row.LicensePlate,
+                    Brand = row.Brand,
+                    Model = row.Model,
+                    Year = row.Year,
+                    DailyRate = row.DailyRate,
+                    IsAvailable = row.IsAvailable,
+                    NumberOfDoors = row.NumberOfDoors ?? 0,
+                    FuelType = row.FuelType ?? string.Empty
+                };
+
+            case "Motorcycle":
+                return new Motorcycle
+                {
+                    Id = row.Id,
+                    LicensePlate = row.LicensePlate,
+                    Brand = row.Brand,
+                    Model = row.Model,
+                    Year = row.Year,
+                    DailyRate = row.DailyRate,
+                    IsAvailable = row.IsAvailable,
+                    EngineCapacity = row.EngineCapacity ?? 0,
+                    HasSidecar = row.HasSidecar ?? false
+                };
+
+            case "Truck":
+                return new Truck
+                {
+                    Id = row.Id,
+                    LicensePlate = row.LicensePlate,
+                    Brand = row.Brand,
+                    Model = row.Model,
+                    Year = row.Year,
+                    DailyRate = row.DailyRate,
+                    IsAvailable = row.IsAvailable,
+                    LoadCapacity = row.LoadCapacity ?? 0m,
+                    NumberOfAxles = row.NumberOfAxles ?? 0
+                };
+
+            default:
+                throw new InvalidOperationException($"Unknown vehicle type: {vehicleType}");
+                
         };
     }
 }

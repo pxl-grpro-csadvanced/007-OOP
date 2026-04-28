@@ -26,15 +26,22 @@
   <Class Name="VehicleRentalSystem.Domain.Entities.Vehicle">
     <Position X="8.75" Y="0.5" Width="3.25" />
     <TypeIdentifier>
-      <HashCode>AAACAEAABAAAAAAEAAAAAAAAAAAAAAEIAAgAAIABAAg=</HashCode>
+      <HashCode>AAACAEAABAAAAAAEAAAAAAAAAAAAAAEIAAgAAIADAAg=</HashCode>
       <FileName>Entities\Vehicle.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="VehicleRentalSystem.Domain.Entities.Customer">
-    <Position X="13.75" Y="0.5" Width="2.25" />
+    <Position X="13.75" Y="0.5" Width="3" />
     <TypeIdentifier>
       <HashCode>AAACAEIAACAAAAAEAAAAQAAAAAAAAAAIAAAAAAAAAAg=</HashCode>
       <FileName>Entities\Customer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VehicleRentalSystem.Domain.Entities.Rental">
+    <Position X="5" Y="0.5" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAECAAAAAAAAAAABEBAAAAAgBAAAgBAAAAAAAEAAAAA=</HashCode>
+      <FileName>Entities\Rental.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Font Name="Segoe UI" Size="9" />

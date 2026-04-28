@@ -184,7 +184,7 @@
                                 <DataGridTextColumn Header="Vehicle" Binding="{Binding Vehicle}" Width="200"/>
                                 <DataGridTextColumn Header="Start Date" Binding="{Binding StartDate, StringFormat=d}" Width="100"/>
                                 <DataGridTextColumn Header="End Date" Binding="{Binding EndDate, StringFormat=d}" Width="100"/>
-                                <DataGridTextColumn Header="Days" Binding="{Binding GetRentalDays}" Width="70"/>
+                                <DataGridTextColumn Header="Days" Binding="{Binding TotalDays}" Width="70"/>
                                 <DataGridTextColumn Header="Total Cost" Binding="{Binding TotalCost, StringFormat=C}" Width="100"/>
                                 <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" Width="70"/>
                             </DataGrid.Columns>

@@ -1,5 +1,5 @@
 using VehicleRentalSystem.Domain.Entities;
-using VehicleRentalSystem.Domain.Repositories;
+using VehicleRentalSystem.Domain.Interfaces;
 
 namespace VehicleRentalSystem.Application.Services
 {
@@ -44,7 +44,7 @@ namespace VehicleRentalSystem.Application.Services
                 throw new InvalidOperationException("Customer not found");
             }
 
-            var vehicle = await _vehicleRepository.GetByIdAsync(vehicleId);
+            Vehicle vehicle = await _vehicleRepository.GetByIdAsync(vehicleId);
             if (vehicle == null)
             {
                 throw new InvalidOperationException("Vehicle not found");

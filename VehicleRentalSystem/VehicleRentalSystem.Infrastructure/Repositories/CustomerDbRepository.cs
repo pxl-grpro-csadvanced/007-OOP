@@ -5,11 +5,11 @@ using VehicleRentalSystem.Domain.Interfaces;
 
 namespace VehicleRentalSystem.Infrastructure.Repositories;
 
-public class CustomerRepository : ICustomerRepository
+public class CustomerDbRepository : ICustomerRepository
 {
     private readonly DbConnectionFactory _connectionFactory;
 
-    public CustomerRepository(DbConnectionFactory connectionFactory)
+    public CustomerDbRepository(DbConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
     }

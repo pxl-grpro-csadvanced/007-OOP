@@ -1,8 +1,9 @@
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using VehicleRentalSystem.Application;
+using VehicleRentalSystem.Application.Services;
 using VehicleRentalSystem.Domain.Entities;
+using VehicleRentalSystem.Domain.Interfaces;
 using VehicleRentalSystem.Infrastructure;
 using VehicleRentalSystem.Infrastructure.Repositories;
 
@@ -27,9 +28,10 @@ public partial class MainWindow : Window
             "TrustServerCertificate=True;Encrypt=False;";
         var dbFactory = new DbConnectionFactory(connectionString);
 
-        var vehicleRepository = new VehicleRepository(dbFactory);
-        var customerRepository = new CustomerRepository(dbFactory);
-        var rentalRepository = new RentalRepository(dbFactory, customerRepository, vehicleRepository);
+        IVehicleRepository vehicleRepository = new VehicleRepository(dbFactory);
+        ICustomerRepository customerRepository = new CustomerDbRepository(dbFactory);
+        //ICustomerRepository customerRepository = new CustomerApiRepository();
+        IRentalRepository rentalRepository = new RentalRepository(dbFactory, customerRepository, vehicleRepository);
 
         _vehicleService = new VehicleService(vehicleRepository);
         _customerService = new CustomerService(customerRepository);
@@ -92,10 +94,7 @@ public partial class MainWindow : Window
         {
             var available = (await _vehicleService.GetAvailableVehiclesAsync()).ToList();
 
-            RentalVehicleComboBox.ItemsSource = available
-                .Select(v => new { v.Id, Display = $"{v.Brand} {v.Model} ({v.LicensePlate})" })
-                .ToList();
-            RentalVehicleComboBox.DisplayMemberPath = "Display";
+            RentalVehicleComboBox.ItemsSource = available.ToList();
 
             _rentals = (await _rentalService.GetActiveRentalsAsync()).ToList();
 
@@ -300,8 +299,8 @@ public partial class MainWindow : Window
                 throw new ArgumentException("End date must be after start date.");
 
             // Retrieve the actual domain objects by index
-            var customerItem = (dynamic)RentalCustomerComboBox.SelectedItem!;
-            var vehicleItem  = (dynamic)RentalVehicleComboBox.SelectedItem!;
+            Customer customerItem = (Customer)RentalCustomerComboBox.SelectedItem!;
+            Vehicle vehicleItem  = (Vehicle)RentalVehicleComboBox.SelectedItem!;
             int customerId   = customerItem.Id;
             int vehicleId    = vehicleItem.Id;
 
@@ -316,7 +315,7 @@ public partial class MainWindow : Window
 
             var message =
                 $"Rental created!\n\n" +
-                $"Customer: {customerItem.Display}\n" +
+                $"Customer: {customerItem.GetFullName()}\n" +
                 $"Vehicle: {vehicle.Brand} {vehicle.Model}\n" +
                 $"Days: {days}\n" +
                 $"Rental cost: {rentalCost:C}\n" +

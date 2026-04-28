@@ -1,5 +1,5 @@
 using VehicleRentalSystem.Domain.Entities;
-using VehicleRentalSystem.Domain.Repositories;
+using VehicleRentalSystem.Domain.Interfaces;
 
 namespace VehicleRentalSystem.Application.Services
 {

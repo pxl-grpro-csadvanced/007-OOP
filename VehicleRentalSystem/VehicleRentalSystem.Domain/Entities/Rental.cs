@@ -27,5 +27,6 @@ public class Rental
         IsActive = true;
     }
 
+    public int TotalDays { get => GetRentalDays(); } //Enkel nodig om te tonen in DataGrid
     public int GetRentalDays() => (EndDate - StartDate).Days;
 }
