@@ -14,7 +14,7 @@ public class CustomerDbRepository : ICustomerRepository
         _connectionFactory = connectionFactory;
     }
 
-    public Task<int> AddAsync(Customer customer)
+    public async Task<int> AddAsync(Customer customer)
     {
         string sql = @"
             INSERT INTO Customers (Name, Email, PhoneNumber)
@@ -23,7 +23,7 @@ public class CustomerDbRepository : ICustomerRepository
 
         using (IDbConnection connection = _connectionFactory.CreateConnection())
         {
-            return connection.ExecuteScalarAsync<int>(sql, customer);
+            return await connection.ExecuteScalarAsync<int>(sql, customer);
         }
     }
 
@@ -55,7 +55,7 @@ public class CustomerDbRepository : ICustomerRepository
         }
     }
 
-    public Task UpdateAsync(Customer customer)
+    public async Task UpdateAsync(Customer customer)
     {
         string sql = @"UPDATE Customers SET
             FirstName = @FirstName, LastName = @LastName, Email = @Email,
@@ -64,7 +64,7 @@ public class CustomerDbRepository : ICustomerRepository
 
         using (IDbConnection connection = _connectionFactory.CreateConnection())
         {
-            return connection.ExecuteAsync(sql, customer);
+            await connection.ExecuteAsync(sql, customer);
         }
     }
     
