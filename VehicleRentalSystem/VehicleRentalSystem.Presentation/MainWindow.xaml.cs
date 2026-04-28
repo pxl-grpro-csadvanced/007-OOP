@@ -1,8 +1,9 @@
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using VehicleRentalSystem.Application.Services;
+using VehicleRentalSystem.Application;
 using VehicleRentalSystem.Domain.Entities;
-using VehicleRentalSystem.Infrastructure.Data;
+using VehicleRentalSystem.Infrastructure;
 using VehicleRentalSystem.Infrastructure.Repositories;
 
 namespace VehicleRentalSystem.Presentation;
@@ -13,11 +14,17 @@ public partial class MainWindow : Window
     private readonly CustomerService _customerService;
     private readonly RentalService _rentalService;
 
+    private List<Vehicle> _vehicles = [];
+    private List<Customer> _customers = [];
+    private List<Rental> _rentals = [];
+
     public MainWindow()
     {
         InitializeComponent();
 
-        var connectionString = "Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=VehicleRentalDb;Data Source=.\\sqlexpress;TrustServerCertificate=True";
+        var connectionString =
+            "Server=.\\sqlexpress;Database=VehicleRentalDb;Trusted_Connection=True;" +
+            "TrustServerCertificate=True;Encrypt=False;";
         var dbFactory = new DbConnectionFactory(connectionString);
 
         var vehicleRepository = new VehicleRepository(dbFactory);
@@ -28,159 +35,168 @@ public partial class MainWindow : Window
         _customerService = new CustomerService(customerRepository);
         _rentalService = new RentalService(rentalRepository, vehicleRepository, customerRepository);
 
-        StartDatePicker.SelectedDate = DateTime.Today;
-        EndDatePicker.SelectedDate = DateTime.Today.AddDays(1);
 
-        LoadAllData();
     }
 
-    private async void LoadAllData()
+
+
+    // ──────────────────────────────────────────────
+    // Data loading
+    // ──────────────────────────────────────────────
+
+    private async void LoadAllDataAsync(object sender, RoutedEventArgs e)
     {
-        await LoadVehicles();
-        await LoadCustomers();
-        await LoadRentals();
+        await LoadAllDataAsync();
+    }
+    private async Task LoadAllDataAsync()
+    {
+        await LoadVehiclesAsync();
+        await LoadCustomersAsync();
+        await LoadRentalsAsync();
     }
 
-    #region Vehicle Management
-
-    private async Task LoadVehicles()
+    private async Task LoadVehiclesAsync()
     {
         try
         {
-            var vehicles = await _vehicleService.GetAllVehiclesAsync();
-            VehicleDataGrid.ItemsSource = vehicles;
+            _vehicles = (await _vehicleService.GetAllVehiclesAsync()).ToList();
 
-            var availableVehicles = await _vehicleService.GetAvailableVehiclesAsync();
-            RentalVehicleComboBox.ItemsSource = availableVehicles;
+            VehicleDataGrid.ItemsSource = _vehicles.ToList();
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error loading vehicles: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowError("Loading vehicles failed", ex);
         }
+    }
+
+    private async Task LoadCustomersAsync()
+    {
+        try
+        {
+            _customers = (await _customerService.GetAllCustomersAsync()).ToList();
+
+            CustomerDataGrid.ItemsSource = _customers.ToList();
+
+            RentalCustomerComboBox.ItemsSource = _customers.ToList();
+            //RentalCustomerComboBox.DisplayMemberPath = "Display";
+        }
+        catch (Exception ex)
+        {
+            ShowError("Loading customers failed", ex);
+        }
+    }
+
+    private async Task LoadRentalsAsync()
+    {
+        try
+        {
+            var available = (await _vehicleService.GetAvailableVehiclesAsync()).ToList();
+
+            RentalVehicleComboBox.ItemsSource = available
+                .Select(v => new { v.Id, Display = $"{v.Brand} {v.Model} ({v.LicensePlate})" })
+                .ToList();
+            RentalVehicleComboBox.DisplayMemberPath = "Display";
+
+            _rentals = (await _rentalService.GetActiveRentalsAsync()).ToList();
+
+            RentalDataGrid.ItemsSource = _rentals.ToList();
+                
+        }
+        catch (Exception ex)
+        {
+            ShowError("Loading rentals failed", ex);
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    // Vehicles tab
+    // ──────────────────────────────────────────────
+
+    private void VehicleTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (CarFieldsPanel == null) return;
+        var selected = (VehicleTypeComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString();
+        CarFieldsPanel.Visibility      = selected == "Car"        ? Visibility.Visible : Visibility.Collapsed;
+        MotorcycleFieldsPanel.Visibility = selected == "Motorcycle" ? Visibility.Visible : Visibility.Collapsed;
+        TruckFieldsPanel.Visibility    = selected == "Truck"      ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async void AddVehicleButton_Click(object sender, RoutedEventArgs e)
     {
         try
         {
-            var licensePlate = LicensePlateTextBox.Text;
-            var brand = BrandTextBox.Text;
-            var model = ModelTextBox.Text;
+            var type  = (VehicleTypeComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString();
+            var plate = LicensePlateTextBox.Text.Trim();
+            var brand = BrandTextBox.Text.Trim();
+            var model = ModelTextBox.Text.Trim();
 
-            if (string.IsNullOrWhiteSpace(licensePlate) || string.IsNullOrWhiteSpace(brand) || string.IsNullOrWhiteSpace(model))
-            {
-                MessageBox.Show("Please fill in all required fields", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
+            if (!int.TryParse(YearTextBox.Text, out int year))
+                throw new ArgumentException("Year must be a whole number.");
+            if (!decimal.TryParse(DailyRateTextBox.Text, out decimal rate) || rate <= 0)
+                throw new ArgumentException("Daily rate must be a positive number.");
 
-            if (!int.TryParse(YearTextBox.Text, out int year) || year < 1900 || year > DateTime.Now.Year + 1)
-            {
-                MessageBox.Show("Please enter a valid year", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            if (!decimal.TryParse(DailyRateTextBox.Text, out decimal dailyRate) || dailyRate <= 0)
-            {
-                MessageBox.Show("Please enter a valid daily rate", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var selectedType = (VehicleTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
-
-            switch (selectedType)
+            switch (type)
             {
                 case "Car":
-                    if (!int.TryParse(NumberOfDoorsTextBox.Text, out int doors) || doors < 2 || doors > 5)
-                    {
-                        MessageBox.Show("Please enter a valid number of doors (2-5)", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
-                    var fuelType = (FuelTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Petrol";
-                    await _vehicleService.AddCarAsync(licensePlate, brand, model, year, dailyRate, doors, fuelType);
+                    if (!int.TryParse(NumberOfDoorsTextBox.Text, out int doors))
+                        throw new ArgumentException("Number of doors must be a whole number.");
+                    var fuel = (FuelTypeComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "Petrol";
+                    await _vehicleService.AddCarAsync(plate, brand, model, year, rate, doors, fuel);
                     break;
 
                 case "Motorcycle":
-                    if (!int.TryParse(EngineCapacityTextBox.Text, out int capacity) || capacity < 50 || capacity > 2000)
-                    {
-                        MessageBox.Show("Please enter a valid engine capacity (50-2000)", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
-                    var hasSidecar = HasSidecarCheckBox.IsChecked ?? false;
-                    await _vehicleService.AddMotorcycleAsync(licensePlate, brand, model, year, dailyRate, capacity, hasSidecar);
+                    if (!int.TryParse(EngineCapacityTextBox.Text, out int cc))
+                        throw new ArgumentException("Engine capacity must be a whole number.");
+                    await _vehicleService.AddMotorcycleAsync(plate, brand, model, year, rate, cc,
+                        HasSidecarCheckBox.IsChecked == true);
                     break;
 
                 case "Truck":
-                    if (!decimal.TryParse(LoadCapacityTextBox.Text, out decimal loadCapacity) || loadCapacity <= 0)
-                    {
-                        MessageBox.Show("Please enter a valid load capacity", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
-                    if (!int.TryParse(NumberOfAxlesTextBox.Text, out int axles) || axles < 2 || axles > 10)
-                    {
-                        MessageBox.Show("Please enter a valid number of axles (2-10)", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
-                    await _vehicleService.AddTruckAsync(licensePlate, brand, model, year, dailyRate, loadCapacity, axles);
+                    if (!decimal.TryParse(LoadCapacityTextBox.Text, out decimal load) || load <= 0)
+                        throw new ArgumentException("Load capacity must be a positive number.");
+                    if (!int.TryParse(NumberOfAxlesTextBox.Text, out int axles))
+                        throw new ArgumentException("Number of axles must be a whole number.");
+                    await _vehicleService.AddTruckAsync(plate, brand, model, year, rate, load, axles);
                     break;
             }
 
-            ClearVehicleFields();
-            await LoadVehicles();
-            MessageBox.Show("Vehicle added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            ClearVehicleForm();
+            await LoadVehiclesAsync();
+            MessageBox.Show("Vehicle added successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error adding vehicle: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowError("Adding vehicle failed", ex);
         }
     }
 
     private async void DeleteVehicleButton_Click(object sender, RoutedEventArgs e)
     {
-        var selectedVehicle = VehicleDataGrid.SelectedItem as Vehicle;
-        if (selectedVehicle == null)
-        {
-            MessageBox.Show("Please select a vehicle to delete", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
+        int index = VehicleDataGrid.SelectedIndex;
+        if (index < 0) return;
 
-        var result = MessageBox.Show($"Are you sure you want to delete {selectedVehicle.Brand} {selectedVehicle.Model}?",
+        var vehicle = _vehicles[index];
+
+        var result = MessageBox.Show(
+            $"Delete {vehicle.Brand} {vehicle.Model} ({vehicle.LicensePlate})?",
             "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result != MessageBoxResult.Yes) return;
 
-        if (result == MessageBoxResult.Yes)
+        try
         {
-            try
-            {
-                await _vehicleService.DeleteVehicleAsync(selectedVehicle.Id);
-                await LoadVehicles();
-                MessageBox.Show("Vehicle deleted successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error deleting vehicle: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            await _vehicleService.DeleteVehicleAsync(vehicle.Id);
+            await LoadVehiclesAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowError("Deleting vehicle failed", ex);
         }
     }
 
-    private async void RefreshVehiclesButton_Click(object sender, RoutedEventArgs e)
-    {
-        await LoadVehicles();
-    }
+    private async void RefreshVehiclesButton_Click(object sender, RoutedEventArgs e) =>
+        await LoadVehiclesAsync();
 
-    private void VehicleTypeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (VehicleTypeComboBox == null) return;
-
-        var selectedType = (VehicleTypeComboBox.SelectedItem as ComboBoxItem)?.Content.ToString();
-
-        if (CarFieldsPanel != null && MotorcycleFieldsPanel != null && TruckFieldsPanel != null)
-        {
-            CarFieldsPanel.Visibility = selectedType == "Car" ? Visibility.Visible : Visibility.Collapsed;
-            MotorcycleFieldsPanel.Visibility = selectedType == "Motorcycle" ? Visibility.Visible : Visibility.Collapsed;
-            TruckFieldsPanel.Visibility = selectedType == "Truck" ? Visibility.Visible : Visibility.Collapsed;
-        }
-    }
-
-    private void ClearVehicleFields()
+    private void ClearVehicleForm()
     {
         LicensePlateTextBox.Clear();
         BrandTextBox.Clear();
@@ -188,93 +204,70 @@ public partial class MainWindow : Window
         YearTextBox.Clear();
         DailyRateTextBox.Clear();
         NumberOfDoorsTextBox.Clear();
-        FuelTypeComboBox.SelectedIndex = 0;
         EngineCapacityTextBox.Clear();
         HasSidecarCheckBox.IsChecked = false;
         LoadCapacityTextBox.Clear();
         NumberOfAxlesTextBox.Clear();
     }
 
-    #endregion
-
-    #region Customer Management
-
-    private async Task LoadCustomers()
-    {
-        try
-        {
-            var customers = await _customerService.GetAllCustomersAsync();
-            CustomerDataGrid.ItemsSource = customers;
-            RentalCustomerComboBox.ItemsSource = customers;
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Error loading customers: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
+    // ──────────────────────────────────────────────
+    // Customers tab
+    // ──────────────────────────────────────────────
 
     private async void AddCustomerButton_Click(object sender, RoutedEventArgs e)
     {
-        var firstName = CustomerFirstNameTextBox.Text;
-        var lastName = CustomerLastNameTextBox.Text;
-        var email = EmailTextBox.Text;
-        var phone = PhoneNumberTextBox.Text;
-        var license = DriverLicenseTextBox.Text;
-
-        if (string.IsNullOrWhiteSpace(firstName) || string.IsNullOrWhiteSpace(lastName) ||
-            string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(phone) ||
-            string.IsNullOrWhiteSpace(license))
-        {
-            MessageBox.Show("Please fill in all fields", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
         try
         {
+            var firstName = CustomerFirstNameTextBox.Text.Trim();
+            var lastName  = CustomerLastNameTextBox.Text.Trim();
+            var email     = EmailTextBox.Text.Trim();
+            var phone     = PhoneNumberTextBox.Text.Trim();
+            var license   = DriverLicenseTextBox.Text.Trim();
+
+            if (string.IsNullOrEmpty(firstName) || string.IsNullOrEmpty(lastName))
+                throw new ArgumentException("First name and last name are required.");
+            if (!email.Contains('@'))
+                throw new ArgumentException("A valid email address is required.");
+
             await _customerService.AddCustomerAsync(firstName, lastName, email, phone, license);
-            ClearCustomerFields();
-            await LoadCustomers();
-            MessageBox.Show("Customer added successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            ClearCustomerForm();
+            await LoadCustomersAsync();
+            MessageBox.Show("Customer added successfully.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error adding customer: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowError("Adding customer failed", ex);
         }
     }
 
     private async void DeleteCustomerButton_Click(object sender, RoutedEventArgs e)
     {
-        var selectedCustomer = CustomerDataGrid.SelectedItem as Customer;
-        if (selectedCustomer == null)
-        {
-            MessageBox.Show("Please select a customer to delete", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
+        int index = CustomerDataGrid.SelectedIndex;
+        if (index < 0) return;
 
-        var result = MessageBox.Show($"Are you sure you want to delete {selectedCustomer.GetFullName()}?",
+        var customer = _customers[index];
+
+        var result = MessageBox.Show(
+            $"Delete customer {customer.GetFullName()}?",
             "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result != MessageBoxResult.Yes) return;
 
-        if (result == MessageBoxResult.Yes)
+        try
         {
-            try
-            {
-                await _customerService.DeleteCustomerAsync(selectedCustomer.Id);
-                await LoadCustomers();
-                MessageBox.Show("Customer deleted successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error deleting customer: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            await _customerService.DeleteCustomerAsync(customer.Id);
+            await LoadCustomersAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowError("Deleting customer failed", ex);
         }
     }
 
-    private async void RefreshCustomersButton_Click(object sender, RoutedEventArgs e)
-    {
-        await LoadCustomers();
-    }
+    private async void RefreshCustomersButton_Click(object sender, RoutedEventArgs e) =>
+        await LoadCustomersAsync();
 
-    private void ClearCustomerFields()
+    private void ClearCustomerForm()
     {
         CustomerFirstNameTextBox.Clear();
         CustomerLastNameTextBox.Clear();
@@ -283,108 +276,104 @@ public partial class MainWindow : Window
         DriverLicenseTextBox.Clear();
     }
 
-    #endregion
-
-    #region Rental Management
-
-    private async Task LoadRentals()
-    {
-        try
-        {
-            var rentals = await _rentalService.GetActiveRentalsAsync();
-            RentalDataGrid.ItemsSource = rentals;
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Error loading rentals: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
-    }
+    // ──────────────────────────────────────────────
+    // Rentals tab
+    // ──────────────────────────────────────────────
 
     private async void CreateRentalButton_Click(object sender, RoutedEventArgs e)
     {
-        var selectedCustomer = RentalCustomerComboBox.SelectedItem as Customer;
-        var selectedVehicle = RentalVehicleComboBox.SelectedItem as Vehicle;
-
-        if (selectedCustomer == null || selectedVehicle == null)
-        {
-            MessageBox.Show("Please select both a customer and a vehicle", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
-        if (!StartDatePicker.SelectedDate.HasValue || !EndDatePicker.SelectedDate.HasValue)
-        {
-            MessageBox.Show("Please select start and end dates", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
-        var startDate = StartDatePicker.SelectedDate.Value;
-        var endDate = EndDatePicker.SelectedDate.Value;
-
-        if (endDate <= startDate)
-        {
-            MessageBox.Show("End date must be after start date", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
         try
         {
-            await _rentalService.CreateRentalAsync(selectedCustomer.Id, selectedVehicle.Id, startDate, endDate);
-            await LoadRentals();
-            await LoadVehicles();
+            if (RentalCustomerComboBox.SelectedIndex < 0)
+                throw new ArgumentException("Please select a customer.");
+            if (RentalVehicleComboBox.SelectedIndex < 0)
+                throw new ArgumentException("Please select a vehicle.");
+            if (StartDatePicker.SelectedDate == null)
+                throw new ArgumentException("Please select a start date.");
+            if (EndDatePicker.SelectedDate == null)
+                throw new ArgumentException("Please select an end date.");
 
-            int days = (endDate - startDate).Days;
-            decimal rentalCost = selectedVehicle.CalculateRentalCost(days);
-            decimal insuranceCost = _rentalService.CalculateInsuranceCost(selectedVehicle, days);
-            decimal totalCost = rentalCost + insuranceCost;
+            var startDate = StartDatePicker.SelectedDate.Value;
+            var endDate   = EndDatePicker.SelectedDate.Value;
 
-            var message = $"Rental created successfully!\n\n" +
-                         $"Customer: {selectedCustomer.GetFullName()}\n" +
-                         $"Vehicle: {selectedVehicle.Brand} {selectedVehicle.Model}\n" +
-                         $"Days: {days}\n" +
-                         $"Rental Cost: {rentalCost:C}\n" +
-                         $"Insurance Cost: {insuranceCost:C}\n" +
-                         $"Total Cost: {totalCost:C}";
+            if (endDate <= startDate)
+                throw new ArgumentException("End date must be after start date.");
+
+            // Retrieve the actual domain objects by index
+            var customerItem = (dynamic)RentalCustomerComboBox.SelectedItem!;
+            var vehicleItem  = (dynamic)RentalVehicleComboBox.SelectedItem!;
+            int customerId   = customerItem.Id;
+            int vehicleId    = vehicleItem.Id;
+
+            var vehicle = _vehicles.First(v => v.Id == vehicleId);
+
+            await _rentalService.CreateRentalAsync(customerId, vehicleId, startDate, endDate);
+
+            int days          = (endDate - startDate).Days;
+            decimal rentalCost    = vehicle.CalculateRentalCost(days);
+            decimal insuranceCost = _rentalService.CalculateInsuranceCost(vehicle, days);
+            decimal totalCost     = rentalCost + insuranceCost;
+
+            var message =
+                $"Rental created!\n\n" +
+                $"Customer: {customerItem.Display}\n" +
+                $"Vehicle: {vehicle.Brand} {vehicle.Model}\n" +
+                $"Days: {days}\n" +
+                $"Rental cost: {rentalCost:C}\n" +
+                $"Insurance cost: {insuranceCost:C}\n" +
+                $"Total cost: {totalCost:C}";
 
             MessageBox.Show(message, "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+            await LoadRentalsAsync();
+            await LoadVehiclesAsync();
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error creating rental: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            ShowError("Creating rental failed", ex);
         }
     }
 
     private async void CompleteRentalButton_Click(object sender, RoutedEventArgs e)
     {
-        var selectedRental = RentalDataGrid.SelectedItem as Rental;
-        if (selectedRental == null)
+        int index = RentalDataGrid.SelectedIndex;
+        if (index < 0) return;
+
+        var rental = _rentals[index];
+
+        if (!rental.IsActive)
         {
-            MessageBox.Show("Please select a rental to complete", "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show("This rental is already completed.", "Info",
+                MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
 
-        var result = MessageBox.Show("Are you sure you want to complete this rental?",
-            "Confirm Complete", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var result = MessageBox.Show(
+            $"Complete rental #{rental.Id} for {rental.Customer?.GetFullName()}?",
+            "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
+        if (result != MessageBoxResult.Yes) return;
 
-        if (result == MessageBoxResult.Yes)
+        try
         {
-            try
-            {
-                await _rentalService.CompleteRentalAsync(selectedRental.Id);
-                await LoadRentals();
-                await LoadVehicles();
-                MessageBox.Show("Rental completed successfully! Vehicle is now available.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error completing rental: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            await _rentalService.CompleteRentalAsync(rental.Id);
+            await LoadRentalsAsync();
+            await LoadVehiclesAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowError("Completing rental failed", ex);
         }
     }
 
-    private async void RefreshRentalsButton_Click(object sender, RoutedEventArgs e)
-    {
-        await LoadRentals();
-    }
+    private async void RefreshRentalsButton_Click(object sender, RoutedEventArgs e) =>
+        await LoadRentalsAsync();
 
-    #endregion
+    // ──────────────────────────────────────────────
+    // Helpers
+    // ──────────────────────────────────────────────
+
+    private static void ShowError(string title, Exception ex) =>
+        MessageBox.Show(ex.Message, title, MessageBoxButton.OK, MessageBoxImage.Error);
+
+
 }

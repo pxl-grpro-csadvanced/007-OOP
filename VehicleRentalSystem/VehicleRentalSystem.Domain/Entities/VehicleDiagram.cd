@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
+  <Class Name="VehicleRentalSystem.Domain.Entities.Truck">
+    <Position X="9.5" Y="4.75" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAQAAAAAAAAAAAQEIAAAAAAAAAAg=</HashCode>
+      <FileName>Entities\Truck.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VehicleRentalSystem.Domain.Entities.Car">
+    <Position X="5.5" Y="4.75" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AABAAEAAAAAAAAAAAAAAAAAAAAAAAAEIEAAAAAIAAAg=</HashCode>
+      <FileName>Entities\Car.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VehicleRentalSystem.Domain.Entities.Motorcycle">
+    <Position X="13.25" Y="4.75" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AABAAAAAAAAAAAAAAAAAAAAAAAAACAEIAIAAAAIAAAg=</HashCode>
+      <FileName>Entities\Motorcycle.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="VehicleRentalSystem.Domain.Entities.Vehicle">
+    <Position X="8.75" Y="0.5" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAACAEAABAAAAAAEAAAAAAAAAAAAAAEIAAgAAIABAAg=</HashCode>
+      <FileName>Entities\Vehicle.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="VehicleRentalSystem.Domain.Entities.Customer">
+    <Position X="13.75" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAACAEIAACAAAAAEAAAAQAAAAAAAAAAIAAAAAAAAAAg=</HashCode>
+      <FileName>Entities\Customer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

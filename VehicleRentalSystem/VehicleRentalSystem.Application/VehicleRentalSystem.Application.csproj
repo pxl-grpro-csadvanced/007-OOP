@@ -2,10 +2,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VehicleRentalSystem.Domain\VehicleRentalSystem.Domain.csproj" />
+    <ProjectReference Include="..\VehicleRentalSystem.Infrastructure\VehicleRentalSystem.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>

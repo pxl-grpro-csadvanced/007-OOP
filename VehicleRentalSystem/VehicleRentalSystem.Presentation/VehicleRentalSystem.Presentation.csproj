@@ -2,12 +2,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\VehicleRentalSystem.Application\VehicleRentalSystem.Application.csproj" />
-    <ProjectReference Include="..\VehicleRentalSystem.Infrastructure\VehicleRentalSystem.Infrastructure.csproj" />
+    <ProjectReference Include="..\VehicleRentalSystem.Domain\VehicleRentalSystem.Domain.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>

@@ -1,164 +1,158 @@
 using Dapper;
 using VehicleRentalSystem.Domain.Entities;
-using VehicleRentalSystem.Domain.Repositories;
-using VehicleRentalSystem.Infrastructure.Data;
+using VehicleRentalSystem.Domain.Interfaces;
 
-namespace VehicleRentalSystem.Infrastructure.Repositories
+namespace VehicleRentalSystem.Infrastructure.Repositories;
+
+public class VehicleRepository : IVehicleRepository
 {
-    public class VehicleRepository : IVehicleRepository
+    private readonly DbConnectionFactory _connectionFactory;
+
+    public VehicleRepository(DbConnectionFactory connectionFactory)
     {
-        private readonly DbConnectionFactory _connectionFactory;
+        _connectionFactory = connectionFactory;
+    }
 
-        public VehicleRepository(DbConnectionFactory connectionFactory)
+    public async Task<IEnumerable<Vehicle>> GetAllAsync()
+    {
+        const string sql = "SELECT * FROM Vehicles";
+        using (var connection = _connectionFactory.CreateConnection())
         {
-            _connectionFactory = connectionFactory;
+            var results = await connection.QueryAsync(sql);
+            return results.Select(MapToVehicle);
         }
+    }
 
-        public async Task<IEnumerable<Vehicle>> GetAllAsync()
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            var sql = @"SELECT Id, LicensePlate, Brand, Model, Year, DailyRate, IsAvailable, VehicleType, 
-                        NumberOfDoors, FuelType, EngineCapacity, HasSidecar, LoadCapacity, NumberOfAxles 
-                        FROM Vehicles";
-            
-            var vehicles = await connection.QueryAsync<dynamic>(sql);
-            return MapToVehicles(vehicles);
-        }
+    public async Task<Vehicle?> GetByIdAsync(int id)
+    {
+        const string sql = "SELECT * FROM Vehicles WHERE Id = @Id";
+        using var connection = _connectionFactory.CreateConnection();
+        var result = await connection.QuerySingleOrDefaultAsync(sql, new { Id = id });
+        return result == null ? null : MapToVehicle(result);
+    }
 
-        public async Task<Vehicle?> GetByIdAsync(int id)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            var sql = @"SELECT Id, LicensePlate, Brand, Model, Year, DailyRate, IsAvailable, VehicleType, 
-                        NumberOfDoors, FuelType, EngineCapacity, HasSidecar, LoadCapacity, NumberOfAxles 
-                        FROM Vehicles WHERE Id = @Id";
-            
-            var result = await connection.QueryFirstOrDefaultAsync<dynamic>(sql, new { Id = id });
-            if (result == null) return null;
-            
-            return MapToVehicle(result);
-        }
+    public async Task<int> AddAsync(Vehicle vehicle)
+    {
+        using var connection = _connectionFactory.CreateConnection();
 
-        public async Task<IEnumerable<Vehicle>> GetAvailableVehiclesAsync()
+        if (vehicle is Car car)
         {
-            using var connection = _connectionFactory.CreateConnection();
-            var sql = @"SELECT Id, LicensePlate, Brand, Model, Year, DailyRate, IsAvailable, VehicleType, 
-                        NumberOfDoors, FuelType, EngineCapacity, HasSidecar, LoadCapacity, NumberOfAxles 
-                        FROM Vehicles WHERE IsAvailable = 1";
-            
-            var vehicles = await connection.QueryAsync<dynamic>(sql);
-            return MapToVehicles(vehicles);
-        }
-
-        public async Task<int> AddAsync(Vehicle vehicle)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            
-            var sql = @"INSERT INTO Vehicles (LicensePlate, Brand, Model, Year, DailyRate, IsAvailable, VehicleType, 
-                        NumberOfDoors, FuelType, EngineCapacity, HasSidecar, LoadCapacity, NumberOfAxles) 
-                        VALUES (@LicensePlate, @Brand, @Model, @Year, @DailyRate, @IsAvailable, @VehicleType, 
-                        @NumberOfDoors, @FuelType, @EngineCapacity, @HasSidecar, @LoadCapacity, @NumberOfAxles); 
-                        SELECT CAST(SCOPE_IDENTITY() as int)";
-            
-            var parameters = CreateParameters(vehicle);
-            return await connection.ExecuteScalarAsync<int>(sql, parameters);
-        }
-
-        public async Task UpdateAsync(Vehicle vehicle)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            
-            var sql = @"UPDATE Vehicles SET LicensePlate = @LicensePlate, Brand = @Brand, Model = @Model, 
-                        Year = @Year, DailyRate = @DailyRate, IsAvailable = @IsAvailable, VehicleType = @VehicleType,
-                        NumberOfDoors = @NumberOfDoors, FuelType = @FuelType, EngineCapacity = @EngineCapacity, 
-                        HasSidecar = @HasSidecar, LoadCapacity = @LoadCapacity, NumberOfAxles = @NumberOfAxles 
-                        WHERE Id = @Id";
-            
-            var parameters = CreateParameters(vehicle);
-            await connection.ExecuteAsync(sql, parameters);
-        }
-
-        public async Task DeleteAsync(int id)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            var sql = "DELETE FROM Vehicles WHERE Id = @Id";
-            await connection.ExecuteAsync(sql, new { Id = id });
-        }
-
-        private IEnumerable<Vehicle> MapToVehicles(IEnumerable<dynamic> results)
-        {
-            var vehicles = new List<Vehicle>();
-            foreach (var result in results)
+            const string sql = @"INSERT INTO Vehicles
+                (LicensePlate, Brand, Model, Year, DailyRate, IsAvailable, VehicleType, NumberOfDoors, FuelType)
+                VALUES (@LicensePlate, @Brand, @Model, @Year, @DailyRate, @IsAvailable, @VehicleType, @NumberOfDoors, @FuelType);
+                SELECT CAST(SCOPE_IDENTITY() AS INT)";
+            return await connection.ExecuteScalarAsync<int>(sql, new
             {
-                vehicles.Add(MapToVehicle(result));
-            }
-            return vehicles;
+                car.LicensePlate, car.Brand, car.Model, car.Year,
+                car.DailyRate, car.IsAvailable,
+                VehicleType = "Car",
+                car.NumberOfDoors, car.FuelType
+            });
+        }
+        else if (vehicle is Motorcycle moto)
+        {
+            const string sql = @"INSERT INTO Vehicles
+                (LicensePlate, Brand, Model, Year, DailyRate, IsAvailable, VehicleType, EngineCapacity, HasSidecar)
+                VALUES (@LicensePlate, @Brand, @Model, @Year, @DailyRate, @IsAvailable, @VehicleType, @EngineCapacity, @HasSidecar);
+                SELECT CAST(SCOPE_IDENTITY() AS INT)";
+            return await connection.ExecuteScalarAsync<int>(sql, new
+            {
+                moto.LicensePlate, moto.Brand, moto.Model, moto.Year,
+                moto.DailyRate, moto.IsAvailable,
+                VehicleType = "Motorcycle",
+                moto.EngineCapacity, moto.HasSidecar
+            });
+        }
+        else if (vehicle is Truck truck)
+        {
+            const string sql = @"INSERT INTO Vehicles
+                (LicensePlate, Brand, Model, Year, DailyRate, IsAvailable, VehicleType, LoadCapacity, NumberOfAxles)
+                VALUES (@LicensePlate, @Brand, @Model, @Year, @DailyRate, @IsAvailable, @VehicleType, @LoadCapacity, @NumberOfAxles);
+                SELECT CAST(SCOPE_IDENTITY() AS INT)";
+            return await connection.ExecuteScalarAsync<int>(sql, new
+            {
+                truck.LicensePlate, truck.Brand, truck.Model, truck.Year,
+                truck.DailyRate, truck.IsAvailable,
+                VehicleType = "Truck",
+                truck.LoadCapacity, truck.NumberOfAxles
+            });
         }
 
-        private Vehicle MapToVehicle(dynamic result)
-        {
-            string vehicleType = result.VehicleType;
-            
-            return vehicleType switch
-            {
-                "Car" => new Car
-                {
-                    Id = result.Id,
-                    LicensePlate = result.LicensePlate,
-                    Brand = result.Brand,
-                    Model = result.Model,
-                    Year = result.Year,
-                    DailyRate = result.DailyRate,
-                    IsAvailable = result.IsAvailable,
-                    NumberOfDoors = result.NumberOfDoors ?? 0,
-                    FuelType = result.FuelType ?? string.Empty
-                },
-                "Motorcycle" => new Motorcycle
-                {
-                    Id = result.Id,
-                    LicensePlate = result.LicensePlate,
-                    Brand = result.Brand,
-                    Model = result.Model,
-                    Year = result.Year,
-                    DailyRate = result.DailyRate,
-                    IsAvailable = result.IsAvailable,
-                    EngineCapacity = result.EngineCapacity ?? 0,
-                    HasSidecar = result.HasSidecar ?? false
-                },
-                "Truck" => new Truck
-                {
-                    Id = result.Id,
-                    LicensePlate = result.LicensePlate,
-                    Brand = result.Brand,
-                    Model = result.Model,
-                    Year = result.Year,
-                    DailyRate = result.DailyRate,
-                    IsAvailable = result.IsAvailable,
-                    LoadCapacity = result.LoadCapacity ?? 0,
-                    NumberOfAxles = result.NumberOfAxles ?? 0
-                },
-                _ => throw new InvalidOperationException($"Unknown vehicle type: {vehicleType}")
-            };
-        }
+        throw new InvalidOperationException($"Unknown vehicle type: {vehicle.GetType().Name}");
+    }
 
-        private object CreateParameters(Vehicle vehicle)
+    public async Task UpdateAsync(Vehicle vehicle)
+    {
+        const string sql = @"UPDATE Vehicles SET
+            LicensePlate = @LicensePlate, Brand = @Brand, Model = @Model,
+            Year = @Year, DailyRate = @DailyRate, IsAvailable = @IsAvailable
+            WHERE Id = @Id";
+        using var connection = _connectionFactory.CreateConnection();
+        await connection.ExecuteAsync(sql, new
         {
-            return new
+            vehicle.Id, vehicle.LicensePlate, vehicle.Brand, vehicle.Model,
+            vehicle.Year, vehicle.DailyRate, vehicle.IsAvailable
+        });
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        const string sql = "DELETE FROM Vehicles WHERE Id = @Id";
+        using var connection = _connectionFactory.CreateConnection();
+        await connection.ExecuteAsync(sql, new { Id = id });
+    }
+
+    public async Task<IEnumerable<Vehicle>> GetAvailableVehiclesAsync()
+    {
+        const string sql = "SELECT * FROM Vehicles WHERE IsAvailable = 1";
+        using var connection = _connectionFactory.CreateConnection();
+        var results = await connection.QueryAsync(sql);
+        return results.Select(MapToVehicle);
+    }
+
+    private static Vehicle MapToVehicle(dynamic row)
+    {
+        string vehicleType = row.VehicleType;
+
+        return vehicleType switch
+        {
+            "Car" => new Car
             {
-                vehicle.Id,
-                vehicle.LicensePlate,
-                vehicle.Brand,
-                vehicle.Model,
-                vehicle.Year,
-                vehicle.DailyRate,
-                vehicle.IsAvailable,
-                VehicleType = vehicle.GetVehicleType(),
-                NumberOfDoors = (vehicle as Car)?.NumberOfDoors,
-                FuelType = (vehicle as Car)?.FuelType,
-                EngineCapacity = (vehicle as Motorcycle)?.EngineCapacity,
-                HasSidecar = (vehicle as Motorcycle)?.HasSidecar,
-                LoadCapacity = (vehicle as Truck)?.LoadCapacity,
-                NumberOfAxles = (vehicle as Truck)?.NumberOfAxles
-            };
-        }
+                Id = row.Id,
+                LicensePlate = row.LicensePlate,
+                Brand = row.Brand,
+                Model = row.Model,
+                Year = row.Year,
+                DailyRate = row.DailyRate,
+                IsAvailable = row.IsAvailable,
+                NumberOfDoors = row.NumberOfDoors ?? 0,
+                FuelType = row.FuelType ?? string.Empty
+            },
+            "Motorcycle" => new Motorcycle
+            {
+                Id = row.Id,
+                LicensePlate = row.LicensePlate,
+                Brand = row.Brand,
+                Model = row.Model,
+                Year = row.Year,
+                DailyRate = row.DailyRate,
+                IsAvailable = row.IsAvailable,
+                EngineCapacity = row.EngineCapacity ?? 0,
+                HasSidecar = row.HasSidecar ?? false
+            },
+            "Truck" => new Truck
+            {
+                Id = row.Id,
+                LicensePlate = row.LicensePlate,
+                Brand = row.Brand,
+                Model = row.Model,
+                Year = row.Year,
+                DailyRate = row.DailyRate,
+                IsAvailable = row.IsAvailable,
+                LoadCapacity = row.LoadCapacity ?? 0m,
+                NumberOfAxles = row.NumberOfAxles ?? 0
+            },
+            _ => throw new InvalidOperationException($"Unknown vehicle type: {vehicleType}")
+        };
     }
 }

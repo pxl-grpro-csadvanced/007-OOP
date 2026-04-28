@@ -1,55 +1,71 @@
 using Dapper;
+using System.Data;
 using VehicleRentalSystem.Domain.Entities;
-using VehicleRentalSystem.Domain.Repositories;
-using VehicleRentalSystem.Infrastructure.Data;
+using VehicleRentalSystem.Domain.Interfaces;
 
-namespace VehicleRentalSystem.Infrastructure.Repositories
+namespace VehicleRentalSystem.Infrastructure.Repositories;
+
+public class CustomerRepository : ICustomerRepository
 {
-    public class CustomerRepository : ICustomerRepository
+    private readonly DbConnectionFactory _connectionFactory;
+
+    public CustomerRepository(DbConnectionFactory connectionFactory)
     {
-        private readonly DbConnectionFactory _connectionFactory;
+        _connectionFactory = connectionFactory;
+    }
 
-        public CustomerRepository(DbConnectionFactory connectionFactory)
+    public Task<int> AddAsync(Customer customer)
+    {
+        string sql = @"
+            INSERT INTO Customers (Name, Email, PhoneNumber)
+            VALUES (@Name, @Email, @PhoneNumber);
+            SELECT CAST(SCOPE_IDENTITY() as int);";
+
+        using (IDbConnection connection = _connectionFactory.CreateConnection())
         {
-            _connectionFactory = connectionFactory;
+            return connection.ExecuteScalarAsync<int>(sql, customer);
         }
+    }
 
-        public async Task<IEnumerable<Customer>> GetAllAsync()
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            var sql = "SELECT Id, FirstName, LastName, Email, PhoneNumber, DriverLicenseNumber FROM Customers";
-            return await connection.QueryAsync<Customer>(sql);
-        }
+    public async Task DeleteAsync(int id)
+    {
+        string sql = "DELETE FROM Customers WHERE Id = @Id";
 
-        public async Task<Customer?> GetByIdAsync(int id)
+        using (IDbConnection connection = _connectionFactory.CreateConnection())
         {
-            using var connection = _connectionFactory.CreateConnection();
-            var sql = "SELECT Id, FirstName, LastName, Email, PhoneNumber, DriverLicenseNumber FROM Customers WHERE Id = @Id";
-            return await connection.QueryFirstOrDefaultAsync<Customer>(sql, new { Id = id });
-        }
-
-        public async Task<int> AddAsync(Customer customer)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            var sql = @"INSERT INTO Customers (FirstName, LastName, Email, PhoneNumber, DriverLicenseNumber) 
-                        VALUES (@FirstName, @LastName, @Email, @PhoneNumber, @DriverLicenseNumber); 
-                        SELECT CAST(SCOPE_IDENTITY() as int)";
-            return await connection.ExecuteScalarAsync<int>(sql, customer);
-        }
-
-        public async Task UpdateAsync(Customer customer)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            var sql = @"UPDATE Customers SET FirstName = @FirstName, LastName = @LastName, Email = @Email, 
-                        PhoneNumber = @PhoneNumber, DriverLicenseNumber = @DriverLicenseNumber WHERE Id = @Id";
-            await connection.ExecuteAsync(sql, customer);
-        }
-
-        public async Task DeleteAsync(int id)
-        {
-            using var connection = _connectionFactory.CreateConnection();
-            var sql = "DELETE FROM Customers WHERE Id = @Id";
             await connection.ExecuteAsync(sql, new { Id = id });
         }
     }
+
+    public async Task<IEnumerable<Customer>> GetAllAsync()
+    {
+        string sql = "SELECT * FROM Customers";
+        using(IDbConnection connection = _connectionFactory.CreateConnection())
+        {
+            return await connection.QueryAsync<Customer>(sql);
+        }
+    }
+
+    public async Task<Customer?> GetByIdAsync(int id)
+    {
+        string sql = "SELECT * FROM Customers WHERE Id = @Id";
+        using (IDbConnection connection = _connectionFactory.CreateConnection())
+        {
+            return await connection.QuerySingleOrDefaultAsync<Customer>(sql, new { Id = id });
+        }
+    }
+
+    public Task UpdateAsync(Customer customer)
+    {
+        string sql = @"UPDATE Customers SET
+            FirstName = @FirstName, LastName = @LastName, Email = @Email,
+            PhoneNumber = @PhoneNumber, DriverLicenseNumber = @DriverLicenseNumber
+            WHERE Id = @Id";
+
+        using (IDbConnection connection = _connectionFactory.CreateConnection())
+        {
+            return connection.ExecuteAsync(sql, customer);
+        }
+    }
+    
 }
